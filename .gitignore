@@ -58,3 +58,20 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# Real_time_3D_Avatar_Generation
+*.dll
+*.onnx
+Temp/
+Assets/Model/
+Assets/Savelog/
+Assets/SaveTextures/
+Assets/SMPLX/
+/Library/
+/Temp/
+/Obj/
+/Build/
+/Builds/
+/Logs/
+/MemoryCaptures/
+
+
