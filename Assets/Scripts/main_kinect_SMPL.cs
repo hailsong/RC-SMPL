@@ -15,7 +15,7 @@ using System.Linq;
 
 
 
-public class main : MonoBehaviour
+public class main_kinect_SMPL : MonoBehaviour
 {
     // Handler for SkeletalTracking thread.
     public GameObject m_tracker;
@@ -167,38 +167,6 @@ public class main : MonoBehaviour
                 vertices = m_tracker.GetComponent<TrackerHandler>().getVerticesData(m_lastFrameData);
                 colors = m_tracker.GetComponent<TrackerHandler>().getColorsData(m_lastFrameData);
                 indices = m_tracker.GetComponent<TrackerHandler>().getIndicesData(m_lastFrameData);
-
-                // mesh에 전달
-                //if (ViewPointCloud)
-                //{
-                //    mesh.vertices = vertices;
-                //    mesh.colors32 = colors;
-                //    mesh.RecalculateBounds();
-                //}
-                //if (!rayCasting)
-                //{
-                //    DoAction();
-                //}
-                // DoAction();
-                //Color32[] pixels = colors;
-                //for (int i = 0; i < pixels.Length; i++)
-                //{
-                //    var d = pixels[i].b;
-                //    var k = pixels[i].r;
-                //    pixels[i].r = d;
-                //    pixels[i].b = k;
-                //}
-                //Debug.Log($"pixels : {pixels.Length}");
-                kinectColorTexture.SetPixels32(colors);
-                kinectColorTexture.Apply();
-
-                ImageInput.canvasRenderer.SetTexture(kinectColorTexture);
-
-                //Capture capture = m_tracker.GetComponent<TrackerHandler>().getCaptureData(m_lastFrameData);
-                //Debug.Log("Capture");
-                //Image colorImage = transformation.ColorImageToDepthCamera(capture);
-                //BGRA[] colorArray = colorImage.GetPixels<BGRA>().ToArray();
-                //Debug.Log(colorArray.ToString());
             }
 
 
@@ -286,98 +254,11 @@ public class main : MonoBehaviour
     {
         while (true)
         {
-            brushCounter = 0;
-            Texture2D tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
 
-            if (updateNumber > 0)
-            {
-                tex = (Texture2D) baseMaterial.mainTexture;
-            }
+            Texture2D tex = (Texture2D)baseMaterial.mainTexture;
 
-
-            for (int index = 0; index < num; index = index + 2)
-            {
-                Vector3 vertex = vertices[index];
-
-                Color32 color = colors[index];
-                if (saving)
-                    yield return 0;
-                if (vertex.z < 2.0f)
-                {
-                    Vector3 uvWorldPosition = Vector3.zero;
-                    if (HitTestUVPosition(ref uvWorldPosition, vertex))
-                    {
-                        int x_coord = (int)(uvWorldPosition.x * textureWidth);
-                        int y_coord = (int)(uvWorldPosition.y * textureHeight);
-                        // Debug.Log($"{x_coord}, {y_coord}");
-
-                        //for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
-                        //{
-                        //    for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
-                        //    {
-                        //        Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
-                        //        Vector2 pointRelativePosition = new Vector2(i, j);
-                        //        float distanceFromCenter = pointRelativePosition.magnitude;
-                        //        // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
-                        //        Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
-                        //        tex.SetPixel(x_coord + i, y_coord + j, brushColor);
-
-                        //        if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
-                        //            istexturefilled[x_coord + i, y_coord + j] = true;
-
-                        //        if (index % 1000 == 0)
-                        //        {
-                        //            Debug.Log($"{brushColor}, {color}, {color_origin}, {distanceFromCenter / brushWindowSize}, {distanceFromCenter}, {i}{j}");
-                        //        }
-                        //    }
-                        //}
-                        //tex.SetPixel(x_coord, y_coord, color);
-                        //tex.SetPixel(x_coord - 1, y_coord, color);
-                        //tex.SetPixel(x_coord + 1, y_coord, color);
-                        //tex.SetPixel(x_coord, y_coord - 1, color);
-                        //tex.SetPixel(x_coord, y_coord + 1, color);
-
-                        Color[] colors = Enumerable.Repeat<Color>(color, brushWindowSize * brushWindowSize).ToArray<Color>();
-
-                        tex.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
-
-                        brushCounter++;
-                    }
-                }
-            }
-            tex.Apply();
-            // RenderTexture.active = null;
-            baseMaterial.mainTexture = tex; //Put the painted texture as the base
-
-            TextureDebug.canvasRenderer.SetTexture(tex);
-            updateNumber += 1;
-            rayCasting = false;
-
-
-            int nowFilled = 0;
-            for (int i = 0; i < 1024; i++)
-            {
-                for (int j = 0; j < 1024; j++)
-                {
-                    if (istexturefilled[i, j] == true)
-                    {
-                        nowFilled++;
-                    }
-                }
-            }
-            Debug.Log(nowFilled);
-            log_isfilled.Add(nowFilled);
-
-            //if (updateNumber % 3 == 0 && LogSaveScreenshots)
-            //{
-            //    SaveScreenshot();
-            //    SaveTextureToFile();
-
-
-
-            //}
-
-
+                
+           
             yield return new WaitForSeconds(UpdatePeriod);
         }
 

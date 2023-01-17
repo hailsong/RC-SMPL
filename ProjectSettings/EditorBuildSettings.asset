@@ -4,5 +4,14 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/animation_sample.unity
+    guid: 88be51d24e8e9b3498e5d08876627862
+  - enabled: 1
+    path: Assets/Scenes/Kinect4AzureSampleScene.unity
+    guid: 31cda86d760055f4886c6ff5e76bc00c
+  - enabled: 1
+    path: Assets/Scenes/main.unity
+    guid: 8db3624642330d143a8bc17eb70c670c
   m_configObjects: {}
