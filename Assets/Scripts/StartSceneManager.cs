@@ -12,6 +12,11 @@ public class StartSceneManager : MonoBehaviour
         SceneManager.LoadScene("Kinect4AzureSampleScene");
     }
 
+    public void ToSMPLKinectScene()
+    {
+        SceneManager.LoadScene("SMPL_Kinect");
+    }
+
     public void ToMainScene()
     {
         SceneManager.LoadScene("main");

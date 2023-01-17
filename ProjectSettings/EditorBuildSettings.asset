@@ -14,4 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/main.unity
     guid: 8db3624642330d143a8bc17eb70c670c
+  - enabled: 1
+    path: Assets/Scenes/SMPL_Kinect.unity
+    guid: f7d14d17be60ff44a9c43a255cbb0c88
   m_configObjects: {}

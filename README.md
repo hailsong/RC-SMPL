@@ -25,6 +25,8 @@ SMPL Unity sample에서 가져온 SMPL model에 Kinect Body Tracking으로부터
 
 - [SMPL Project Page](https://smpl.is.tue.mpg.de/)
 
+- [SMPL-X Project Page](https://smpl-x.is.tue.mpg.de/)
+
 - [Microsoft Azure Kinect Samples github](https://github.com/microsoft/Azure-Kinect-Samples)
 
 
