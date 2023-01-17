@@ -7,6 +7,18 @@ SMPL Unity sample에서 가져온 SMPL model에 Kinect Body Tracking으로부터
 아래 Unity Body Tracking Application 설치 잘 보고 따라가야함.
 
 
+---------------
+
+## 사전 설치 사항
+
+- CUDA (그래픽카드 버전에 맞게, N5 실험실에는 11.4.4)
+[참조](https://afsdzvcx123.tistory.com/entry/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5-Windows%EC%9C%88%EB%8F%84%EC%9A%B0-CUDA-cuDNN-%EC%84%A4%EC%B9%98%EB%B0%A9%EB%B2%95)
+- cudnn (CUDA 버전에 맞게, N5 실험실에는 8.4.1)
+- Unity 2021.3.latest
+- (Optional) 디버깅용 Azure kinect viewer
+[참조](https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/usage.md)
+
+---------------
 
 ## 참고자료
 - [How to Use SMPL Model in Unity (Official mpg documentation)](https://files.is.tue.mpg.de/nmahmood/smpl_website/How-to_SMPLinUnity.pdf)
@@ -15,9 +27,10 @@ SMPL Unity sample에서 가져온 SMPL model에 Kinect Body Tracking으로부터
 
 - [Microsoft Azure Kinect Samples github](https://github.com/microsoft/Azure-Kinect-Samples)
 
+
 ---------------
 
-# Sample Unity Body Tracking Application
+# 1. Sample Unity Body Tracking Application Dependency 설치
 
 ### Directions for getting started:
 
@@ -36,11 +49,11 @@ On the command line of the console at type the following command:
 
 Update-Package -reinstall
 
-The latest libraries will be put in the Packages folder under sample_unity_bodytracking
+The latest libraries will be put in the Packages folder under Real_time_3D_Avatar_Generation
 
 #### 2) Next add these libraries to the Assets/Plugins folder:
 
-You can do this by hand or just **run the batch file MoveLibraryFile.bat** in the sample_unity_bodytracking directory
+You can do this by hand or just **run the batch file MoveLibraryFile.bat** in the Real_time_3D_Avatar_Generation directory
 
 From Packages/Microsoft.Azure.Kinect.BodyTracking.1.1.2/lib/netstandard2.0
 
@@ -91,9 +104,9 @@ From Packages/System.Runtime.CompilerServices.Unsafe.4.5.2/lib/netstandard2.0
 - System.Runtime.CompilerServices.Unsafe.dll
 
 
-#### 3) Then add these libraries to the sample_unity_bodytracking project root directory that contains the Assets folder:
+#### 3) Then add these libraries to the Real_time_3D_Avatar_Generation project root directory that contains the Assets folder:
 
-You can do this by hand or just **run the batch file MoveLibraryFile.bat** in the sample_unity_bodytracking directory
+You can do this by hand or just **run the batch file MoveLibraryFile.bat** in the Real_time_3D_Avatar_Generation directory
 
 From Packages/Microsoft.Azure.Kinect.BodyTracking.1.1.2/content
 
@@ -114,32 +127,37 @@ First, download and install [Visual C++ Redistributable](https://docs.microsoft.
 
 Additionally:
 
+**아래 CUDA 이용!**
+
 **For CUDA**:
 * Download and install appropriate version of CUDA and make sure that CUDA_PATH exists as an environment variable (e.g C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.4).
 * Download and install appropriate version of cuDNN and add a value to the PATH environment variable for it (e.g C:\Program Files\NVIDIA GPU Computing Toolkit\cuda-8.2.2.6\bin).
 
-**For TensorRT**:
+~~For TensorRT~~:
 * Download and install appropriate version of CUDA and make sure that CUDA_PATH exists as an environment variable (e.g C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.4).
 * Download and install appropriate version of TensorRT and add a value to the PATH environment variable for it (e.g C:\Program Files\NVIDIA GPU Computing Toolkit\TensorRT-8.2.1.8\lib).
 
-**For DirectML**:
+~~For DirectML~~:
 * Copy the **directml.dll** from the sample_unity_bodytracking folder to the unity editor directory (e.g C:\Program Files\Unity\Hub\Editor\2019.1.2f1\Editor)
 
 
 #### 5) Then specify Execution Provider for the tracking:
 
-In the ...\sample_unity_bodytracking\Assets\Scripts\SkeletalTrackingProvider.cs change the ProcessingMode to the one you want.
+In the ...\Real_time_3D_Avatar_Generation\Assets\Scripts\SkeletalTrackingProvider.cs change the ProcessingMode to the one you want.
+
+코드 안에 적용 해놨음
 
 * TrackerProcessingMode.GPU (Defaults to DirectML for Windows)
 * TrackerProcessingMode.CPU
-* TrackerProcessingMode.Cuda
+* **TrackerProcessingMode.Cuda**
 * TrackerProcessingMode.TensorRT
 * TrackerProcessingMode.DirectML
 
 
 #### 6) Open the Unity Project and under Scenes/  select the Kinect4AzureSampleScene:
 
-![alt text](./UnitySampleGettingStarted.png)
+Scenes/Kinect4AzureSampleScene으로 body tracking 작동 확인
+![alt text](./Images/UnitySampleGettingStarted.png)
 
 
 Press play.
@@ -156,7 +174,7 @@ Press play.
 
 You will need to put [required DLLs for ONNX Runtime execution](https://docs.microsoft.com/en-us/azure/kinect-dk/body-sdk-setup#required-dlls-for-onnx-runtime-execution-environments) in the same directory with the .exe:
 
-You can copy ONNXRuntime and DirectML files from nuget package by hand or from sample_unity_bodytracking directory after running **the batch file MoveLibraryFile.bat** (Step #3)
+You can copy ONNXRuntime and DirectML files from nuget package by hand or from Real_time_3D_Avatar_Generation directory after running **the batch file MoveLibraryFile.bat** (Step #3)
 
 For the CUDA/cuDNN/TensorRT DLLs (Step #4) you can either have them in the PATH environment variable or copy required set of DLLs from the installation locations:
 
@@ -164,3 +182,22 @@ e.g.
 * from C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.4\bin for the CUDA files.
 * from C:\Program Files\NVIDIA GPU Computing Toolkit\cuda-8.2.2.6\bin for the cuDNN files.
 * from C:\Program Files\NVIDIA GPU Computing Toolkit\TensorRT-8.2.1.8\lib for the TensorRT files.
+
+---------------
+
+
+# 2. SMPLX Dependency 설치
+
+SMPLX unity project 파일 다운로드 (project page에 등록 필요) 
+
+![alt text](./Images/SMPLX1.png)
+
+다운로드 받은 SMPLX unity project 압축 해제 후 나온 Assets/SMPLX를 **Real_time_3D_Avatar_Generation/Assets**로 이동
+
+**주의** Assets/SMPLX/Models에 있는 Prefabs import setting Animation 탭에서 Unity Humanoid 아바타로 Animation type 맞춰주어야 함
+
+![alt text](./Images/SMPLX2.png)
+
+**주의** Assets/SMPLX/Models에 있는 Prefabs import setting Model 탭에서 Read/Write Enabled 체크해야함 (Pose 따라서 mesh가 계속 변경되어야 해서)
+
+![alt text](./Images/SMPLX3.png)
