@@ -196,10 +196,18 @@ SMPLX unity project 파일 다운로드 (project page에 등록 필요)
 
 다운로드 받은 SMPLX unity project 압축 해제 후 나온 Assets/SMPLX를 **Real_time_3D_Avatar_Generation/Assets**로 이동
 
-**주의** Assets/SMPLX/Models에 있는 Prefabs import setting Animation 탭에서 Unity Humanoid 아바타로 Animation type 맞춰주어야 함
+**주의** Assets/SMPLX/Models에 있는 Prefabs import setting Animation 탭에서 Unity Humanoid 아바타로 Animation type 맞춰주어야 함. 수정 이후에는 model
 
 ![alt text](./Images/SMPLX2.png)
 
 **주의** Assets/SMPLX/Models에 있는 Prefabs import setting Model 탭에서 Read/Write Enabled 체크해야함 (Pose 따라서 mesh가 계속 변경되어야 해서)
 
 ![alt text](./Images/SMPLX3.png)
+
+Model import 및 humanoid 업데이트 이후 Assets/SMPLX/Prefabs의 smplx-male.fbx를 scene으로 가져와서 사용할 예정
+
+
+---------------
+
+# 3. Scene Description
+
