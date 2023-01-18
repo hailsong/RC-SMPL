@@ -11,12 +11,18 @@ SMPL Unity sample에서 가져온 SMPL model에 Kinect Body Tracking으로부터
 
 ## 사전 설치 사항
 
-- CUDA (그래픽카드 버전에 맞게, N5 실험실에는 11.4.4)
+- CUDA (그래픽카드 버전에 맞게, N5 실험실에는 11.7)
 [참조](https://afsdzvcx123.tistory.com/entry/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5-Windows%EC%9C%88%EB%8F%84%EC%9A%B0-CUDA-cuDNN-%EC%84%A4%EC%B9%98%EB%B0%A9%EB%B2%95)
-- cudnn (CUDA 버전에 맞게, N5 실험실에는 8.4.1)
+- cudnn (CUDA 버전에 맞게, N5 실험실에는 8.6.0)
 - Unity 2021.3.latest
 - (Optional) 디버깅용 Azure kinect viewer
 [참조](https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/usage.md)
+- [CUDA compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/index.html)
+- [cuDNN documentation](https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#install-windows)
+
+
+  cf) N5 실험실 PC 그래픽카드 A5000. CUDA 12.0은 아직 cudnn지원이 없어서 11.7로 다운그레이드
+
 
 ---------------
 
