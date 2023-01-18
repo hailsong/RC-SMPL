@@ -217,3 +217,22 @@ Model import 및 humanoid 업데이트 이후 Assets/SMPLX/Prefabs의 smplx-male
 
 # 3. Scene Description
 
+- ./Assets/Scenes/animation_sample.scene
+
+    SMPL-X 기본 모델의 애니메이션 샘플과 다른 scene load 버튼 포함
+    ![alt text](./Images/demo1.png)
+
+
+- ./Assets/Scenes/Kinect4AzureSampleScene.scene
+  
+  kinect body tracking sdk에서 제공해주는 pose detection sample. (script가 현재 충돌해있는 상태라 동작 X)
+
+- ./Assets/Scenes/SMPL_Kinect.scene
+  
+  kinect body tracking과 SMPL-X 기본 모델 연결한 Scene
+  ![alt text](./Images/demo3.png)
+
+- ./Assets/Scenes/main.scene
+  
+  SMPL-X의 texture map 사용자화해 업데이트하는 main Scene
+    ![alt text](./Images/demo2.png)
