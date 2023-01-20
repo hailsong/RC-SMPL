@@ -15,6 +15,7 @@ using System.Linq;
 
 
 
+
 public class main : MonoBehaviour
 {
     // Handler for SkeletalTracking thread.
@@ -22,9 +23,10 @@ public class main : MonoBehaviour
     private SkeletalTrackingProvider m_skeletalTrackingProvider;
     public BackgroundData m_lastFrameData = new BackgroundData();
     Transformation transformation;
+    public GameObject jsonManager;
+    public GameObject SMPLXObject;
 
     Texture2D kinectColorTexture;
-
 
 
     [Header("Pointcloud Filter")]
@@ -40,6 +42,8 @@ public class main : MonoBehaviour
     public Camera sceneCamera, canvasCam;
     [SerializeField]
     float distanceThreshold;
+    [SerializeField]
+    float angleTreshold;
     [SerializeField]
     Color brushColor = Color.red;
     public Transform rayTarget;
@@ -70,7 +74,7 @@ public class main : MonoBehaviour
     System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
 
-    Vector3 rayDirection;
+
     bool saving = false; //Flag to check if we are saving the texture
     int brushCounter = 0, MAX_BRUSH_COUNT = 368640; //To avoid having millions of brushes
 
@@ -151,6 +155,16 @@ public class main : MonoBehaviour
         //thread = new Thread(TextureStream);
         //thread.Start();
 
+        float[] betas = jsonManager.GetComponent<JsonScript>().readShapeParms();
+        for (int i = 0; i < 10; i++)
+        {
+            Debug.Log(betas[i]);
+        }
+        setShapeParms(betas);
+
+
+
+
 
     }
 
@@ -205,6 +219,12 @@ public class main : MonoBehaviour
         }
     }
 
+    void setShapeParms(float[] betas)
+    {
+        SMPLXObject.GetComponent<SMPLX>().betas = betas;
+        SMPLXObject.GetComponent<SMPLX>().SetBetaShapes();
+    }
+
     void OnApplicationQuit()
     {
         if (m_skeletalTrackingProvider != null)
@@ -212,7 +232,6 @@ public class main : MonoBehaviour
             m_skeletalTrackingProvider.Dispose();
         }
     }
-
 
     public void DoAction()
     {
@@ -230,58 +249,6 @@ public class main : MonoBehaviour
 
     }
 
-    //IEnumerator RayCastPTs()
-    //{
-    //    brushCounter = 0;
-    //    Texture2D tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
-
-    //    if (updateNumber > 0)
-    //    {
-    //        tex = (Texture2D)baseMaterial.mainTexture;
-    //    }
-    //    for (int index = 0; index < num; index = index + 1)
-    //    {
-    //        Vector3 vertex = vertices[index];
-
-    //        Color32 color = colors[index];
-    //        if (saving)
-    //            yield return 0;
-    //        if (vertex.z < 2.0f)
-    //        {
-    //            Vector3 uvWorldPosition = Vector3.zero;
-    //            if (HitTestUVPosition(ref uvWorldPosition, vertex))
-    //            {
-    //                int x_coord = (int)(uvWorldPosition.x * textureWidth);
-    //                int y_coord = (int)(uvWorldPosition.y * textureHeight);
-    //                // Debug.Log($"{x_coord}, {y_coord}");
-
-    //                tex.SetPixel(x_coord, y_coord, color);
-    //                tex.SetPixel(x_coord - 1, y_coord, color);
-    //                tex.SetPixel(x_coord + 1, y_coord, color);
-    //                tex.SetPixel(x_coord, y_coord - 1, color);
-    //                tex.SetPixel(x_coord, y_coord + 1, color);
-
-    //                //if (index % 100 == 0)
-    //                //{
-    //                //    Debug.Log($"{x_coord}, {y_coord}, {color}");
-    //                //}
-
-
-    //                brushCounter++;
-    //            }
-    //        }
-    //    }
-    //    tex.Apply();
-    //    // RenderTexture.active = null;
-    //    baseMaterial.mainTexture = tex; //Put the painted texture as the base
-
-    //    TextureDebug.canvasRenderer.SetTexture(tex);
-    //    updateNumber += 1;
-    //    rayCasting = false;
-
-    //    ScreenCapture.CaptureScreenshot("Screenshot.png");///Screenshot_{updateNumber}.png");
-    //}
-
     IEnumerator RayCastPTsLoop()
     {
         while (true)
@@ -291,7 +258,7 @@ public class main : MonoBehaviour
 
             if (updateNumber > 0)
             {
-                tex = (Texture2D) baseMaterial.mainTexture;
+                tex = (Texture2D)baseMaterial.mainTexture;
             }
 
 
@@ -299,49 +266,64 @@ public class main : MonoBehaviour
             {
                 Vector3 vertex = vertices[index];
 
-                Color32 color = colors[index];
                 if (saving)
                     yield return 0;
                 if (vertex.z < 2.0f)
                 {
+                    Color32 color = colors[index];
+                    float hitAngle = 0;
+
                     Vector3 uvWorldPosition = Vector3.zero;
-                    if (HitTestUVPosition(ref uvWorldPosition, vertex))
+                    if (HitTestUVPosition(ref uvWorldPosition, ref vertex, ref hitAngle))
                     {
                         int x_coord = (int)(uvWorldPosition.x * textureWidth);
                         int y_coord = (int)(uvWorldPosition.y * textureHeight);
+
                         // Debug.Log($"{x_coord}, {y_coord}");
 
-                        //for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
-                        //{
-                        //    for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
-                        //    {
-                        //        Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
-                        //        Vector2 pointRelativePosition = new Vector2(i, j);
-                        //        float distanceFromCenter = pointRelativePosition.magnitude;
-                        //        // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
-                        //        Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
-                        //        tex.SetPixel(x_coord + i, y_coord + j, brushColor);
+                        if (Mathf.Abs(hitAngle) > angleTreshold)
+                        {
+                            //SetPixel with Circle + Filter
+                            //for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
+                            //{
+                            //    for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
+                            //    {
+                            //        Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
+                            //        Vector2 pointRelativePosition = new Vector2(i, j);
+                            //        float distanceFromCenter = pointRelativePosition.magnitude;
+                            //        // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
+                            //        Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                            //        tex.SetPixel(x_coord + i, y_coord + j, brushColor);
 
-                        //        if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
-                        //            istexturefilled[x_coord + i, y_coord + j] = true;
+                            //        if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
+                            //            istexturefilled[x_coord + i, y_coord + j] = true;
 
-                        //        if (index % 1000 == 0)
-                        //        {
-                        //            Debug.Log($"{brushColor}, {color}, {color_origin}, {distanceFromCenter / brushWindowSize}, {distanceFromCenter}, {i}{j}");
-                        //        }
-                        //    }
-                        //}
-                        //tex.SetPixel(x_coord, y_coord, color);
-                        //tex.SetPixel(x_coord - 1, y_coord, color);
-                        //tex.SetPixel(x_coord + 1, y_coord, color);
-                        //tex.SetPixel(x_coord, y_coord - 1, color);
-                        //tex.SetPixel(x_coord, y_coord + 1, color);
+                            //        //if (index % 1000 == 0)
+                            //        //{
+                            //        //    // Debug.Log($"{brushColor}, {color}, {color_origin}, {distanceFromCenter / brushWindowSize}, {distanceFromCenter}, {i}{j}");
+                            //        //    Debug.Log(hitAngle);
+                            //        //}
 
-                        Color[] colors = Enumerable.Repeat<Color>(color, brushWindowSize * brushWindowSize).ToArray<Color>();
+                            //    }
+                            //}
 
-                        tex.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
+                            //SetPixel with cross
+                            //tex.SetPixel(x_coord, y_coord, color);
+                            //tex.SetPixel(x_coord - 1, y_coord, color);
+                            //tex.SetPixel(x_coord + 1, y_coord, color);
+                            //tex.SetPixel(x_coord, y_coord - 1, color);
+                            //tex.SetPixel(x_coord, y_coord + 1, color);
 
-                        brushCounter++;
+
+                            // SetPixel with square
+                            Color[] colors = Enumerable.Repeat<Color>(color, brushWindowSize * brushWindowSize).ToArray<Color>();
+                            tex.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
+
+
+
+                            brushCounter++;
+                        }
+
                     }
                 }
             }
@@ -354,19 +336,20 @@ public class main : MonoBehaviour
             rayCasting = false;
 
 
-            int nowFilled = 0;
-            for (int i = 0; i < 1024; i++)
-            {
-                for (int j = 0; j < 1024; j++)
-                {
-                    if (istexturefilled[i, j] == true)
-                    {
-                        nowFilled++;
-                    }
-                }
-            }
-            Debug.Log(nowFilled);
-            log_isfilled.Add(nowFilled);
+            // Log how filled?
+            //int nowFilled = 0;
+            //for (int i = 0; i < 1024; i++)
+            //{
+            //    for (int j = 0; j < 1024; j++)
+            //    {
+            //        if (istexturefilled[i, j] == true)
+            //        {
+            //            nowFilled++;
+            //        }
+            //    }
+            //}
+            // Debug.Log(nowFilled);
+            // log_isfilled.Add(nowFilled);
 
             //if (updateNumber % 3 == 0 && LogSaveScreenshots)
             //{
@@ -383,8 +366,6 @@ public class main : MonoBehaviour
 
     }
 
-
-
     public Texture2D toTexture2D(RenderTexture rTex)
     {
         Texture2D dest = new Texture2D(rTex.width, rTex.height, TextureFormat.RGBA32, false);
@@ -393,20 +374,22 @@ public class main : MonoBehaviour
         return dest;
     }
 
-    bool HitTestUVPosition(ref Vector3 uvWorldPosition, Vector3 rayTargetTransform)
+    bool HitTestUVPosition(ref Vector3 uvWorldPosition, ref Vector3 rayTargetTransform, ref float hitAngle)
     {
 
         RaycastHit hit;
-        rayDirection = rayTargetTransform - CameraOrigin.position;
+        Vector3 rayDirection = rayTargetTransform - CameraOrigin.position;
         if (Physics.Raycast(CameraOrigin.position, rayDirection, out hit, 100))
         {
             MeshCollider meshCollider = hit.collider as MeshCollider;
+
             if (meshCollider == null || meshCollider.sharedMesh == null)
                 return false;
             if (Vector3.Magnitude(hit.point - rayTargetTransform) > distanceThreshold)
             {
                 return false;
             }
+            hitAngle = GetAngle(hit.normal, rayDirection);
             Vector2 pixelUV = new Vector2(hit.textureCoord.x, hit.textureCoord.y);
             //Debug.Log($"{canvasCam.orthographicSize.ToString()}");
             //uvWorldPosition.x = pixelUV.x - canvasCam.orthographicSize;//To center the UV on X
@@ -423,6 +406,11 @@ public class main : MonoBehaviour
 
     }
 
+    public static float GetAngle(Vector3 from, Vector3 to)
+    {
+        Vector3 v = to - from;
+        return Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg;
+    }
 
     public void SaveTextureToFile()
     {
@@ -437,8 +425,6 @@ public class main : MonoBehaviour
         File.WriteAllBytes(dirPath + "Image_" + now + ".png", bytes);
         Debug.Log($"Saved to {dirPath + "Image_" + now + ".png"}");
     }
-
-    //LOAD TEXTURE
 
     public void LoadTextureFromFile()
     {
@@ -485,6 +471,7 @@ public class main : MonoBehaviour
         Debug.Log($"Saved to {dirPath + "Screenshot_" + now + ".png"}");
 
     }
+
     public void TextureStream()
     {
         Thread.Sleep(5000);
@@ -507,8 +494,5 @@ public class main : MonoBehaviour
         LogSaveScreenshots = !LogSaveScreenshots;
         // Debug.Log(LogSaveScreenshots);
     }
-
-
-
 
 }

@@ -61,11 +61,8 @@ public class main_editTex : MonoBehaviour
 
     Vector3 rayDirection;
     bool saving = false; //Flag to check if we are saving the texture
-    int brushCounter = 0, MAX_BRUSH_COUNT = 368640; //To avoid having millions of brushes
+    int brushCounter = 0;
 
-    // Using Queue
-    private Thread thread;
-    private Queue<Texture2D> textureQueue = new Queue<Texture2D>();
 
     public int textureWidth = 1024;
     public int textureHeight = 1024;
