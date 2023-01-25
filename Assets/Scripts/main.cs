@@ -23,7 +23,7 @@ public class main : MonoBehaviour
     private SkeletalTrackingProvider m_skeletalTrackingProvider;
     public BackgroundData m_lastFrameData = new BackgroundData();
     Transformation transformation;
-    public GameObject jsonManager;
+    public GameObject InitManager;
     public GameObject SMPLXObject;
 
     Texture2D kinectColorTexture;
@@ -155,11 +155,8 @@ public class main : MonoBehaviour
         //thread = new Thread(TextureStream);
         //thread.Start();
 
-        float[] betas = jsonManager.GetComponent<JsonScript>().readShapeParms();
-        for (int i = 0; i < 10; i++)
-        {
-            Debug.Log(betas[i]);
-        }
+        float[] betas = InitManager.GetComponent<JsonScript>().readShapeParms();
+
         setShapeParms(betas);
 
 
@@ -223,6 +220,11 @@ public class main : MonoBehaviour
     {
         SMPLXObject.GetComponent<SMPLX>().betas = betas;
         SMPLXObject.GetComponent<SMPLX>().SetBetaShapes();
+
+        //for (int i = 0; i < 10; i++)
+        //{
+        //    Debug.Log(betas[i]);
+        //}
     }
 
     void OnApplicationQuit()
@@ -251,15 +253,17 @@ public class main : MonoBehaviour
 
     IEnumerator RayCastPTsLoop()
     {
+        Texture2D tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
+        // tex.LoadImage(InitManager.GetComponent<TextureLoader>().initTexture.GetRawTextureData());
+
         while (true)
         {
             brushCounter = 0;
-            Texture2D tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
 
-            if (updateNumber > 0)
-            {
-                tex = (Texture2D)baseMaterial.mainTexture;
-            }
+            //if (updateNumber > 0)
+            //{
+            //    tex = (Texture2D)baseMaterial.mainTexture;
+            //}
 
 
             for (int index = 0; index < num; index = index + 2)
@@ -281,7 +285,7 @@ public class main : MonoBehaviour
 
                         // Debug.Log($"{x_coord}, {y_coord}");
 
-                        if (Mathf.Abs(hitAngle) > angleTreshold)
+                        if (true)
                         {
                             //SetPixel with Circle + Filter
                             //for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
@@ -382,14 +386,15 @@ public class main : MonoBehaviour
         if (Physics.Raycast(CameraOrigin.position, rayDirection, out hit, 100))
         {
             MeshCollider meshCollider = hit.collider as MeshCollider;
+            hitAngle = GetAngle(hit.normal, rayDirection);
 
             if (meshCollider == null || meshCollider.sharedMesh == null)
                 return false;
-            if (Vector3.Magnitude(hit.point - rayTargetTransform) > distanceThreshold)
+            if (Vector3.Magnitude(hit.point - rayTargetTransform) > distanceThreshold || hitAngle > angleTreshold)
             {
                 return false;
             }
-            hitAngle = GetAngle(hit.normal, rayDirection);
+            
             Vector2 pixelUV = new Vector2(hit.textureCoord.x, hit.textureCoord.y);
             //Debug.Log($"{canvasCam.orthographicSize.ToString()}");
             //uvWorldPosition.x = pixelUV.x - canvasCam.orthographicSize;//To center the UV on X
@@ -406,10 +411,9 @@ public class main : MonoBehaviour
 
     }
 
-    public static float GetAngle(Vector3 from, Vector3 to)
-    {
-        Vector3 v = to - from;
-        return Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg;
+    public static float GetAngle(Vector3 N, Vector3 A)
+    {   
+        return Mathf.Atan(-Vector2.Dot(N,A)/(N.magnitude * A.magnitude)) * Mathf.Rad2Deg;
     }
 
     public void SaveTextureToFile()

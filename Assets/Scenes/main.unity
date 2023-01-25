@@ -411,7 +411,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_tracker: {fileID: 566169799}
-  jsonManager: {fileID: 2040114918}
+  InitManager: {fileID: 0}
   SMPLXObject: {fileID: 865242790}
   avatarOrigin: {fileID: 0}
   filterThreshold: 1.26
@@ -420,7 +420,7 @@ MonoBehaviour:
   sceneCamera: {fileID: 720754041}
   canvasCam: {fileID: 720754041}
   distanceThreshold: 0.2
-  angleTreshold: 90
+  angleTreshold: 10
   brushColor: {r: 1, g: 0, b: 0, a: 1}
   rayTarget: {fileID: 0}
   brushContainer: {fileID: 1512370505}
@@ -2773,8 +2773,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2040114920}
   - component: {fileID: 2040114919}
+  - component: {fileID: 2040114921}
   m_Layer: 0
-  m_Name: JsonManager
+  m_Name: InitManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2807,6 +2808,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2040114921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2040114918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fd25df7f736dfa42a1be07e1a448b20, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initTexture: {fileID: 2800000, guid: f4746abb59735394d97b5fd1580168fe, type: 3}
 --- !u!1 &2119003114
 GameObject:
   m_ObjectHideFlags: 0
