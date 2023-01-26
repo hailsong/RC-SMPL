@@ -55,6 +55,7 @@ public class main : MonoBehaviour
     int brushWindowSize; //The size of our brush
     public bool UseThread = true;
     public float UpdatePeriod;
+    public bool useNormalmap = true;
 
 
 
@@ -66,6 +67,8 @@ public class main : MonoBehaviour
     public GameObject debugSaveTex;
     [SerializeField]
     UnityEngine.UI.RawImage TextureDebug;
+    [SerializeField]
+    UnityEngine.UI.RawImage NormalDebug;
     [SerializeField]
     UnityEngine.UI.RawImage ImageInput;
 
@@ -79,19 +82,20 @@ public class main : MonoBehaviour
     int brushCounter = 0, MAX_BRUSH_COUNT = 368640; //To avoid having millions of brushes
 
     // Using Queue
-    private Thread thread;
-    private Queue<Texture2D> textureQueue = new Queue<Texture2D>();
 
-    public int textureWidth = 1024;
-    public int textureHeight = 1024;
+    static int textureWidth = 1024;
+    static int textureHeight = 1024;
 
     public bool[,] istexturefilled = new bool[1024, 1024];
+
+    static int kinectWidth = 640;
+    static int kinectHeight = 576;
 
     public bool rayCasting = false;
     List<int> log_isfilled = new List<int>() { 0 };
 
     //pt 수
-    int num = 368640;
+    int num = kinectWidth * kinectHeight;
 
     Mesh mesh;
 
@@ -141,7 +145,7 @@ public class main : MonoBehaviour
         }
 
 
-        kinectColorTexture = new Texture2D(640, 576);
+        kinectColorTexture = new Texture2D(kinectWidth, kinectHeight);
 
         StartCoroutine(RayCastPTsLoop());
 
@@ -254,6 +258,7 @@ public class main : MonoBehaviour
     IEnumerator RayCastPTsLoop()
     {
         Texture2D tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
+        Texture2D normalMap = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
         // tex.LoadImage(InitManager.GetComponent<TextureLoader>().initTexture.GetRawTextureData());
 
         while (true)
@@ -276,9 +281,10 @@ public class main : MonoBehaviour
                 {
                     Color32 color = colors[index];
                     float hitAngle = 0;
+                    Vector3 hitNormal = Vector3.zero;
 
                     Vector3 uvWorldPosition = Vector3.zero;
-                    if (HitTestUVPosition(ref uvWorldPosition, ref vertex, ref hitAngle))
+                    if (HitTestUVPosition(ref uvWorldPosition, ref vertex, ref hitAngle, ref hitNormal))
                     {
                         int x_coord = (int)(uvWorldPosition.x * textureWidth);
                         int y_coord = (int)(uvWorldPosition.y * textureHeight);
@@ -328,14 +334,32 @@ public class main : MonoBehaviour
                             brushCounter++;
                         }
 
+                        if (useNormalmap)
+                        {
+                            if (!(index % kinectWidth == 0 || index % kinectWidth == kinectWidth - 1 || index < kinectWidth || index > num - kinectWidth))
+                            {
+                                Vector3 normal = calculateNormal(vertex, vertices[index + 1], vertices[index - kinectWidth], vertices[index - 1], vertices[index + kinectWidth]);
+                                //if (index % 1000 == 0)
+                                //{
+                                //    Debug.Log(normal.normalized.ToString());
+                                //    Debug.Log(hitNormal.magnitude); 
+                                //}
+                                Color normalColor = normalToColor((normal.normalized - hitNormal).normalized);
+                                Color[] colors = Enumerable.Repeat<Color>(normalColor, brushWindowSize * brushWindowSize).ToArray<Color>();
+                                normalMap.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
+                            }
+                        }
                     }
                 }
             }
             tex.Apply();
+            normalMap.Apply();
             // RenderTexture.active = null;
             baseMaterial.mainTexture = tex; //Put the painted texture as the base
 
             TextureDebug.canvasRenderer.SetTexture(tex);
+            NormalDebug.canvasRenderer.SetTexture(normalMap);
+
             updateNumber += 1;
             rayCasting = false;
 
@@ -378,7 +402,7 @@ public class main : MonoBehaviour
         return dest;
     }
 
-    bool HitTestUVPosition(ref Vector3 uvWorldPosition, ref Vector3 rayTargetTransform, ref float hitAngle)
+    bool HitTestUVPosition(ref Vector3 uvWorldPosition, ref Vector3 rayTargetTransform, ref float hitAngle, ref Vector3 hitNormal)
     {
 
         RaycastHit hit;
@@ -386,7 +410,9 @@ public class main : MonoBehaviour
         if (Physics.Raycast(CameraOrigin.position, rayDirection, out hit, 100))
         {
             MeshCollider meshCollider = hit.collider as MeshCollider;
-            hitAngle = GetAngle(hit.normal, rayDirection);
+            hitNormal = hit.normal;
+            hitAngle = GetAngle(hitNormal, rayDirection);
+            
 
             if (meshCollider == null || meshCollider.sharedMesh == null)
                 return false;
@@ -414,6 +440,40 @@ public class main : MonoBehaviour
     public static float GetAngle(Vector3 N, Vector3 A)
     {   
         return Mathf.Atan(-Vector2.Dot(N,A)/(N.magnitude * A.magnitude)) * Mathf.Rad2Deg;
+    }
+
+    static Vector3 calculateNormal(Vector3 point, Vector3 point_right, Vector3 point_up, Vector3 point_left, Vector3 point_down)
+    {
+        /*
+                      point_up
+           . (normal2)   ｜    . (normal1)  
+                         ｜
+        point_left――――――point――――――point_right
+                         ｜        
+           . (normal3)   ｜    . (normal4)  
+                     point_down
+
+        return normal at point, by averaging normal of 4 triangle composed with (point, right, up), (point, up, left), (point, left, down), (point, down, right)
+         */
+        Vector3 normal1 = Vector3.Cross(point_right - point, point_up - point);
+        Vector3 normal2 = Vector3.Cross(point_up - point, point_left - point);
+        Vector3 normal3 = Vector3.Cross(point_left - point, point_down - point);
+        Vector3 normal4 = Vector3.Cross(point_down - point, point_right - point);
+
+        Vector3 normal = (normal1 + normal2 + normal3 + normal4) / 4;
+
+        return normal;
+    }
+
+    static Color normalToColor(Vector3 normal)
+    {
+        /*
+        ref : https://docs.unity3d.com/Manual/StandardShaderMaterialParameterNormalMap.html
+        
+         */
+
+        Color normalMapColor = new Color(normal.x / 2 + 0.5f, normal.y / 2 + 0.5f, normal.z / 2 + 0.5f, 1f);
+        return normalMapColor;
     }
 
     public void SaveTextureToFile()
