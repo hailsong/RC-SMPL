@@ -449,7 +449,8 @@ MonoBehaviour:
   sceneCamera: {fileID: 720754041}
   canvasCam: {fileID: 720754041}
   distanceThreshold: 0.2
-  angleTreshold: 20
+  angleTreshold: 30
+  completeThreshold: 0.3
   brushColor: {r: 1, g: 0, b: 0, a: 1}
   rayTarget: {fileID: 0}
   brushContainer: {fileID: 1512370505}
@@ -457,11 +458,13 @@ MonoBehaviour:
   cursorDecal: {fileID: 21300000, guid: b1fa017c585432546b6ec1de5ca8094f, type: 3}
   canvasTexture: {fileID: 8400000, guid: 5ccf150f8e559434d90f8855d0ff70fd, type: 2}
   baseMaterial: {fileID: 2100000, guid: 0c148d37b839c3e4d84057e2d000b7ce, type: 2}
+  normalMaterial: {fileID: 2100000, guid: 6413374c8f46ef24ea03193113dc4cfd, type: 2}
   brushWindowSize: 3
   UseThread: 1
   UpdatePeriod: 1.5
   useNormalmap: 1
-  debugRaycast: {fileID: 1900016052}
+  poseConfidenceThreshold: 0.4
+  confidenceDebug: {fileID: 1900016052}
   debugSaveTex: {fileID: 1777815530}
   TextureDebug: {fileID: 331226956}
   NormalDebug: {fileID: 37833638}
@@ -1316,7 +1319,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.735849, g: 0.735849, b: 0.735849, a: 0}
+  m_BackGroundColor: {r: 0.8349056, g: 1, b: 0.9918702, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -2747,7 +2750,7 @@ GameObject:
   - component: {fileID: 1900016054}
   - component: {fileID: 1900016056}
   m_Layer: 5
-  m_Name: Raycast
+  m_Name: Confidence
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2804,7 +2807,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Raycast
+  m_Text: Confidence
 --- !u!222 &1900016055
 CanvasRenderer:
   m_ObjectHideFlags: 0

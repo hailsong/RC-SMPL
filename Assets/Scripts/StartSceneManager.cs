@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 public class StartSceneManager : MonoBehaviour
 {
-    // Start is called before the first frame update
+    public bool isResultScene;
 
     public void ToKinectScene()
     {
@@ -20,5 +20,13 @@ public class StartSceneManager : MonoBehaviour
     public void ToMainScene()
     {
         SceneManager.LoadScene("main");
+    }
+
+    private void Start()
+    {
+        if (isResultScene)
+        {
+            
+        }
     }
 }
