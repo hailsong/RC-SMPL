@@ -73,6 +73,10 @@ public class main : MonoBehaviour
     UnityEngine.UI.RawImage NormalDebug;
     [SerializeField]
     UnityEngine.UI.RawImage ImageInput;
+    [SerializeField]
+    RectTransform progressBar;
+    [SerializeField]
+    RectTransform progressBarContainer;
 
     public bool LogSaveScreenshots;
 
@@ -528,75 +532,75 @@ public class main : MonoBehaviour
     Texture2D postProcessing(Texture2D inputTexture)
     {
         Texture2D resultTexture = inputTexture;
-        //for (int i = 0; i < textureWidth; i++)
-        //{
-        //    for (int j = 0; j < textureHeight; j++)
-        //    {
-        //        if (!(istexturefilled[i, j])) // && (i + j)%10 == 0)
-        //        {
-        //            int squareSize = 1;
+        for (int i = 0; i < textureWidth; i++)
+        {
+            for (int j = 0; j < textureHeight; j++)
+            {
+                if (!(istexturefilled[i, j])) // && (i + j)%10 == 0)
+                {
+                    int squareSize = 1;
 
-        //            while (squareSize < textureWidth)
-        //            {
-        //                /*
+                    while (squareSize < textureWidth)
+                    {
+                        /*
                     
-        //            2――――――1
-        //            ｜     ｜
-        //            ｜ i,j ｜
-        //            ｜     ｜ 
-        //            3――――――4
-        //            squareSize = (1 to 2) / 2
-        //             */
+                    2――――――1
+                    ｜     ｜
+                    ｜ i,j ｜
+                    ｜     ｜ 
+                    3――――――4
+                    squareSize = (1 to 2) / 2
+                     */
 
-        //                int w1_pointer = Mathf.Min(textureWidth - 1, i + squareSize);
-        //                int w2_pointer = Mathf.Max(0, i - squareSize);
-        //                int h1_pointer = Mathf.Min(textureHeight - 1, j + squareSize);
-        //                int h2_pointer = Mathf.Max(0, j - squareSize);
+                        int w1_pointer = Mathf.Min(textureWidth - 1, i + squareSize);
+                        int w2_pointer = Mathf.Max(0, i - squareSize);
+                        int h1_pointer = Mathf.Min(textureHeight - 1, j + squareSize);
+                        int h2_pointer = Mathf.Max(0, j - squareSize);
 
-        //                List<Color> colorList = new List<Color>();
+                        List<Color> colorList = new List<Color>();
 
-        //                for (int w_pointer = w2_pointer; w_pointer < w1_pointer; w_pointer++)
-        //                {
-        //                    // 3->4
-        //                    if (istexturefilled[w_pointer, h1_pointer])
-        //                    {
-        //                        colorList.Add(inputTexture.GetPixel(w_pointer, h1_pointer));
-        //                    }
-        //                    if (istexturefilled[w_pointer, h2_pointer])
-        //                    {
-        //                        colorList.Add(inputTexture.GetPixel(w_pointer, h2_pointer));
-        //                    }
-        //                }
-        //                for (int h_pointer = h2_pointer; h_pointer < h1_pointer; h_pointer++)
-        //                {
-        //                    if (istexturefilled[w1_pointer, h_pointer])
-        //                    {
-        //                        colorList.Add(inputTexture.GetPixel(w1_pointer, h_pointer));
-        //                    }
-        //                    if (istexturefilled[w2_pointer, h_pointer])
-        //                    {
-        //                        colorList.Add(inputTexture.GetPixel(w2_pointer, h_pointer));
-        //                    }
-        //                }
-        //                if (colorList.Count > 0)
-        //                {
-        //                    Vector4 colorVector = Vector4.zero;
-        //                    foreach (Color colorCandidate in colorList)
-        //                    {
-        //                        colorVector += (Vector4)colorCandidate;
-        //                    }
-        //                    Color colorValue = (Color)(colorVector / colorList.Count);
-        //                    resultTexture.SetPixel(i, j, colorValue);
-        //                    break;
-        //                }
-        //                else
-        //                {
-        //                    squareSize++;
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
+                        for (int w_pointer = w2_pointer; w_pointer < w1_pointer; w_pointer++)
+                        {
+                            // 3->4
+                            if (istexturefilled[w_pointer, h1_pointer])
+                            {
+                                colorList.Add(inputTexture.GetPixel(w_pointer, h1_pointer));
+                            }
+                            if (istexturefilled[w_pointer, h2_pointer])
+                            {
+                                colorList.Add(inputTexture.GetPixel(w_pointer, h2_pointer));
+                            }
+                        }
+                        for (int h_pointer = h2_pointer; h_pointer < h1_pointer; h_pointer++)
+                        {
+                            if (istexturefilled[w1_pointer, h_pointer])
+                            {
+                                colorList.Add(inputTexture.GetPixel(w1_pointer, h_pointer));
+                            }
+                            if (istexturefilled[w2_pointer, h_pointer])
+                            {
+                                colorList.Add(inputTexture.GetPixel(w2_pointer, h_pointer));
+                            }
+                        }
+                        if (colorList.Count > 0)
+                        {
+                            Vector4 colorVector = Vector4.zero;
+                            foreach (Color colorCandidate in colorList)
+                            {
+                                colorVector += (Vector4)colorCandidate;
+                            }
+                            Color colorValue = (Color)(colorVector / colorList.Count);
+                            resultTexture.SetPixel(i, j, colorValue);
+                            break;
+                        }
+                        else
+                        {
+                            squareSize++;
+                        }
+                    }
+                }
+            }
+        }
 
         return resultTexture;
     }
