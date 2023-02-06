@@ -2555,7 +2555,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 210279056, guid: 019b917704c3c29478d778e143d411d2, type: 3}
       propertyPath: drawSkeletons
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 325103643, guid: 019b917704c3c29478d778e143d411d2, type: 3}
       propertyPath: m_IsActive

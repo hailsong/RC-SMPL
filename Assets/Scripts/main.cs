@@ -6,9 +6,6 @@ using System.Collections.Generic;
 
 using System.IO;
 
-using System.Threading.Tasks;
-using System.Threading;
-
 using System.Linq;
 
 
@@ -56,9 +53,9 @@ public class main : MonoBehaviour
     public Material normalMaterial;
     [SerializeField]
     int brushWindowSize; //The size of our brush
-    public bool UseThread = true;
     public float UpdatePeriod;
     public bool useNormalmap = true;
+    public bool useDebug;
     float poseConfidence = 0;
     public float poseConfidenceThreshold;
 
@@ -163,10 +160,6 @@ public class main : MonoBehaviour
 
         watch.Start();
 
-
-        //thread = new Thread(TextureStream);
-        //thread.Start();
-
         float[] betas = InitManager.GetComponent<JsonScript>().readShapeParms();
         
 
@@ -263,7 +256,6 @@ public class main : MonoBehaviour
         watch.Restart();
 
         // StartCoroutine(RayCastPTs());
-        // RayCastPTs_thread();
         watch.Stop();
         // debugRaycast.GetComponent<SetDebug>().SetDebugFloat(watch.ElapsedMilliseconds);
 
@@ -400,8 +392,11 @@ public class main : MonoBehaviour
             // RenderTexture.active = null;
             baseMaterial.mainTexture = tex; //Put the painted texture as the base
 
-            TextureDebug.canvasRenderer.SetTexture(tex);
-            NormalDebug.canvasRenderer.SetTexture(normalMap);
+            if (useDebug)
+            {
+                TextureDebug.canvasRenderer.SetTexture(tex);
+                NormalDebug.canvasRenderer.SetTexture(normalMap);
+            }
 
             updateNumber += 1;
             rayCasting = false;
@@ -679,22 +674,6 @@ public class main : MonoBehaviour
 
     }
 
-    public void TextureStream()
-    {
-        Thread.Sleep(5000);
-
-        while (true)
-        {
-            Debug.LogFormat("Thread#{0}: 시작", Thread.CurrentThread.ManagedThreadId);
-
-            // Debug.Log(vertices.Length.ToString())
-            DoAction();
-            Thread.Sleep(5000);
-
-            Debug.LogFormat("Thread#{0}: 종료", Thread.CurrentThread.ManagedThreadId);
-        }
-
-    }
 
     public void ScreenshotToggle(bool value)
     {

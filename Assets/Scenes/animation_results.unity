@@ -224,6 +224,16 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 9fe85e2d675317b4d83dbb4d3a5d71bc, type: 2}
     - target: {fileID: 5359681426589209979, guid: 22f2d27461b82c94f9586d7e045bbdd2,
         type: 3}
+      propertyPath: m_CastShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5359681426589209979, guid: 22f2d27461b82c94f9586d7e045bbdd2,
+        type: 3}
+      propertyPath: m_ReceiveShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5359681426589209979, guid: 22f2d27461b82c94f9586d7e045bbdd2,
+        type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 364de51383df55444abd5ea7bfc55129, type: 2}
@@ -341,14 +351,17 @@ MonoBehaviour:
   baseMaterial: {fileID: 0}
   normalMaterial: {fileID: 0}
   brushWindowSize: 0
-  UseThread: 1
   UpdatePeriod: 0
   useNormalmap: 1
-  debugRaycast: {fileID: 0}
+  useDebug: 0
+  poseConfidenceThreshold: 0
+  confidenceDebug: {fileID: 0}
   debugSaveTex: {fileID: 0}
   TextureDebug: {fileID: 0}
   NormalDebug: {fileID: 0}
   ImageInput: {fileID: 0}
+  progressBar: {fileID: 0}
+  progressBarContainer: {fileID: 0}
   LogSaveScreenshots: 0
   rayCasting: 0
   updateNumber: 0
