@@ -1338,7 +1338,7 @@ Camera:
     height: 1
   near clip plane: 0.1
   far clip plane: 1000
-  field of view: 60
+  field of view: 65
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -3268,7 +3268,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3145e49b41d93fa4bbe54c7ed2e882e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ParmsJSON: {fileID: 4900000, guid: 4ed103fd44ebe1944a432c1f78668fdc, type: 3}
+  ParmsJSON: {fileID: 4900000, guid: 8203a7a58d3f84241990efd9a1d45724, type: 3}
 --- !u!4 &2040114920
 Transform:
   m_ObjectHideFlags: 0
