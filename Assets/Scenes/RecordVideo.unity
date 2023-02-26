@@ -291,9 +291,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_tracker: {fileID: 566169799}
+  savePeriod: 1
   avatarOrigin: {fileID: 0}
   filterThreshold: 1.26
-  ViewPointCloud: 0
+  ViewPointCloud: 1
   poseConfidenceThreshold: 0
   ImageInput: {fileID: 1391605056}
   LogSaveScreenshots: 0

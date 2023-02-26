@@ -17,37 +17,29 @@ class SaveData
 {
 
     [Serializable]
-    public class SerializableVector3
+    public class SerializableVector3Array
     {
         public float[] x;
         public float[] y;
         public float[] z;
 
-        public SerializableVector3(Vector3[] vectors)
+        public SerializableVector3Array(Vector3[] vecArray)
         {
-            x = vectors.Select(v => v.x).ToArray();
-            y = vectors.Select(v => v.y).ToArray();
-            z = vectors.Select(v => v.z).ToArray();
+            x = vecArray.Select(vec => vec.x).ToArray();
+            y = vecArray.Select(vec => vec.y).ToArray();
+            z = vecArray.Select(vec => vec.z).ToArray();
         }
-
-        public SerializableVector3(Vector3 vector3)
-        {
-            Vector3 = vector3;
-        }
-
-        public Vector3 Vector3 { get; }
 
         public Vector3[] ToVector3Array()
         {
             int length = x.Length;
-            Vector3[] vectors = new Vector3[length];
+            Vector3[] vecArray = new Vector3[length];
             for (int i = 0; i < length; i++)
             {
-                vectors[i] = new Vector3(x[i], y[i], z[i]);
+                vecArray[i] = new Vector3(x[i], y[i], z[i]);
             }
-            return vectors;
+            return vecArray;
         }
-
     }
 
 
@@ -76,6 +68,116 @@ class SaveData
                 colors[i] = new Color32(r[i], g[i], b[i], a[i]);
             }
             return colors;
+        }
+    }
+
+
+    [Serializable]
+    public class SerializableQuaternion
+    {
+        public float[] x;
+        public float[] y;
+        public float[] z;
+        public float[] w;
+
+        public SerializableQuaternion(Quaternion quat)
+        {
+            x = new float[] { quat.x };
+            y = new float[] { quat.y };
+            z = new float[] { quat.z };
+            w = new float[] { quat.w };
+        }
+
+        public Quaternion ToQuaternion()
+        {
+            return new Quaternion(x[0], y[0], z[0], w[0]);
+        }
+    }
+
+    [Serializable]
+    public class SerializableVector3
+    {
+        public float x;
+        public float y;
+        public float z;
+
+        public SerializableVector3(float x, float y, float z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public SerializableVector3(UnityEngine.Vector3 vector3)
+        {
+            this.x = vector3.x;
+            this.y = vector3.y;
+            this.z = vector3.z;
+        }
+
+        public UnityEngine.Vector3 ToUnityVector3()
+        {
+            return new UnityEngine.Vector3(x, y, z);
+        }
+
+        public static implicit operator Vector3(SerializableVector3 serializableVector3)
+        {
+            return new Vector3(serializableVector3.x, serializableVector3.y, serializableVector3.z);
+        }
+
+        public static implicit operator SerializableVector3(Vector3 vector3)
+        {
+            return new SerializableVector3(vector3.x, vector3.y, vector3.z);
+        }
+    }
+
+
+    [Serializable]
+    public class SerializableBody
+    {
+        public SerializableVector3[] JointPositions3D;
+        public SerializableQuaternion[] JointRotations;
+
+        public SerializableBody(Body body)
+        {
+            JointPositions3D = new SerializableVector3[(int)JointId.Count];
+            JointRotations = new SerializableQuaternion[(int)JointId.Count];
+
+            for (int jointNum = 0; jointNum < (int)JointId.Count; jointNum++)
+            {
+                JointPositions3D[jointNum] = new SerializableVector3(new Vector3(body.JointPositions3D[jointNum].X, body.JointPositions3D[jointNum].Y, body.JointPositions3D[jointNum].Z));
+                JointRotations[jointNum] = new SerializableQuaternion(new Quaternion(body.JointRotations[jointNum].X, body.JointRotations[jointNum].Y, body.JointRotations[jointNum].Z, body.JointRotations[jointNum].W));
+            }
+        }
+
+        //public Body ToBody()
+        //{
+        //    Body body = new Body();
+
+        //    for (int jointNum = 0; jointNum < (int)JointId.Count; jointNum++)
+        //    {
+        //        //body.JointPositions3D[jointNum] = JointPositions3D[jointNum].ToVector3();
+        //        body.JointPositions3D[jointNum] = new System.Numerics.Vector3(JointPositions3D[jointNum].ToUnityVector3().x, JointPositions3D[jointNum].ToUnityVector3().y, JointPositions3D[jointNum].ToUnityVector3().z);
+        //        //body.JointRotations[jointNum] = JointRotations[jointNum].ToQuaternion();
+        //        body.JointRotations[jointNum] = new System.Numerics.Quaternion(JointRotations[jointNum].ToQuaternion().x, JointRotations[jointNum].ToQuaternion().y, JointRotations[jointNum].ToQuaternion().z, JointRotations[jointNum].ToQuaternion().w);
+        //    }
+
+        //    return body;
+        //}
+        public Body ToBody()
+        {
+            Body body = new Body();
+
+            body.JointPositions3D = new System.Numerics.Vector3[(int)JointId.Count];
+            body.JointRotations = new System.Numerics.Quaternion[(int)JointId.Count];
+
+            for (int jointNum = 0; jointNum < (int)JointId.Count; jointNum++)
+            {
+                body.JointPositions3D[jointNum] = new System.Numerics.Vector3(JointPositions3D[jointNum].ToUnityVector3().x, JointPositions3D[jointNum].ToUnityVector3().y, JointPositions3D[jointNum].ToUnityVector3().z);
+                body.JointRotations[jointNum] = new System.Numerics.Quaternion(JointRotations[jointNum].ToQuaternion().x, JointRotations[jointNum].ToQuaternion().y, JointRotations[jointNum].ToQuaternion().z, JointRotations[jointNum].ToQuaternion().w);
+            }
+
+            return body;
         }
     }
 
@@ -146,10 +248,10 @@ class SaveData
     //}
 
 
-    public List<SerializableVector3> verticesSave;
+    public List<SerializableVector3Array> verticesSave;
     public List<SerializableColor32> colorSave;
     public List<int[]> indicesSave;
-    // public List<Body> bodySave;
+    public List<SerializableBody> bodySave;
 }
 
 
@@ -163,14 +265,15 @@ public class recordScript : MonoBehaviour
     Transformation transformation;
 
     Texture2D kinectColorTexture;
-
+    private float time;
+    public float savePeriod;
 
     [Header("Pointcloud Filter")]
     [SerializeField]
     Transform avatarOrigin;
     [Range(0.0f, 3.0f)]
     public float filterThreshold;
-    public bool ViewPointCloud = false;
+    public bool ViewPointCloud;
 
     float poseConfidence = 0;
     public float poseConfidenceThreshold;
@@ -208,14 +311,15 @@ public class recordScript : MonoBehaviour
     public int updateNumber = 0;
     //public Texture2D tex = new Texture2D(1024, 1024, TextureFormat.RGB24, false);
 
-    List<SaveData.SerializableVector3> verticesList = new List<SaveData.SerializableVector3>();
+    List<SaveData.SerializableVector3Array> verticesList = new List<SaveData.SerializableVector3Array>();
     List<SaveData.SerializableColor32> colorList = new List<SaveData.SerializableColor32>();
     List<int[]> indicesList = new List<int[]>();
-    List<Body> bodyList = new List<Body>();
+    List<SaveData.SerializableBody> bodyList = new List<SaveData.SerializableBody>();
 
 
 
     bool nowRecording = false;
+    bool nowLoading = false;
     SaveData mySaveData = new SaveData();
 
     void Start()
@@ -241,7 +345,7 @@ public class recordScript : MonoBehaviour
         }
         // 점의 좌표랑 색상 mesh로 전달
 
-        if (ViewPointCloud)
+        if (ViewPointCloud && !nowLoading)
         {
             mesh.vertices = vertices;
             mesh.colors32 = colors;
@@ -263,6 +367,15 @@ public class recordScript : MonoBehaviour
 
     void FixedUpdate()
     {
+        time += Time.deltaTime;
+        
+        if (ViewPointCloud)
+        {
+            mesh.vertices = vertices;
+            mesh.colors32 = colors;
+            mesh.RecalculateBounds();
+        }
+
         if (m_skeletalTrackingProvider.IsRunning)
         {
             if (m_skeletalTrackingProvider.GetCurrentFrameData(ref m_lastFrameData))
@@ -290,16 +403,19 @@ public class recordScript : MonoBehaviour
 
                 ImageInput.canvasRenderer.SetTexture(kinectColorTexture);
 
-                if (nowRecording)
+                if (nowRecording && savePeriod < time)
                 {
                     // verticesList.Add(vertices);
-                    SaveData.SerializableVector3 serializableVector = new SaveData.SerializableVector3(vertices);
+                    SaveData.SerializableVector3Array serializableVector3Arr = new SaveData.SerializableVector3Array(vertices);
                     SaveData.SerializableColor32 serializableColor = new SaveData.SerializableColor32(colors);
-                    verticesList.Add(serializableVector);
+                    SaveData.SerializableBody serializableBody = new SaveData.SerializableBody(body);
+                    verticesList.Add(serializableVector3Arr);
                     colorList.Add(serializableColor);
                     indicesList.Add(indices);
-                    // bodyList.Add(body);
+                    bodyList.Add(serializableBody);
                     Debug.Log($"{verticesList.Count}, {colorList.Count}, {indicesList.Count}, {bodyList.Count}");
+
+                    time = 0f;
                 }
                 
 
@@ -338,7 +454,7 @@ public class recordScript : MonoBehaviour
         mySaveData.verticesSave = verticesList;
         mySaveData.colorSave = colorList;
         mySaveData.indicesSave = indicesList;
-        // mySaveData.bodySave = bodyList;
+        mySaveData.bodySave = bodyList;
 
         bf.Serialize(fs, mySaveData);
         fs.Close();
@@ -349,16 +465,63 @@ public class recordScript : MonoBehaviour
 
     public void triggerLoad()
     {
+        if (nowRecording)
+        {
+            Debug.Log("Cannot load .dat file while recording!");
+            Application.Quit();
+        }
+
+        
         BinaryFormatter bf = new BinaryFormatter();
 
-        string fileName = Application.dataPath + "/SaveStream/" + "20230206164520_SaveStream.dat";
+        string fileName = Application.dataPath + "/SaveStream/" + "20230226223919_SaveStream.dat";
+        nowRecording = false;
+        nowLoading = true;
+
         FileStream fs = new FileStream(fileName, FileMode.Open);
 
         SaveData myLoadData = bf.Deserialize(fs) as SaveData;
 
-        Debug.Log(myLoadData.colorSave);
+        // Debug.Log(myLoadData.colorSave);
         // Debug.Log(myLoadData.bodySave);
         Debug.Log(myLoadData.indicesSave);
+
+
+        //foreach (SaveData.SerializableColor32 S_Color32 in myLoadData.colorSave)
+        //{
+        //    Color32[] loaded = S_Color32.ToColor32Array();
+        //    Debug.Log(loaded.Length);
+        //    Debug.Log(loaded[5]);
+        //}
+        //foreach (SaveData.SerializableVector3Array S_Vector_Arr in myLoadData.verticesSave)
+        //{
+        //    Vector3[] loaded = S_Vector_Arr.ToVector3Array();
+        //    Debug.Log(loaded.Length);
+        //    Debug.Log(loaded[5]);
+        //}
+
+        for (int index_all = 0; index_all < myLoadData.indicesSave.Count; index_all += 1)
+        {
+            int[] indexLoaded = myLoadData.indicesSave[index_all];
+            Color32[] colorLoaded = myLoadData.colorSave[index_all].ToColor32Array();
+            Vector3[] verticesLoaded = myLoadData.verticesSave[index_all].ToVector3Array();
+            Body bodyLoaded = myLoadData.bodySave[index_all].ToBody();
+
+            if (ViewPointCloud && nowLoading)
+            {
+                mesh.vertices = verticesLoaded;
+                mesh.colors32 = colorLoaded;
+                mesh.SetIndices(indexLoaded, MeshTopology.Points, 0);
+                GetComponent<MeshRenderer>().enabled = true;
+            }
+
+            Debug.Log(bodyLoaded.JointPositions3D[1].X);
+            Debug.Log($"{index_all} / {myLoadData.indicesSave.Count} ");
+            
+        }
+
+
+
 
 
 
