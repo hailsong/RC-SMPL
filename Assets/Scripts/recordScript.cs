@@ -260,13 +260,17 @@ public class recordScript : MonoBehaviour
 
     // Handler for SkeletalTracking thread.
     public GameObject m_tracker;
+    public GameObject m_loader;
+    public GameObject SMPL_Avatar;
     private SkeletalTrackingProvider m_skeletalTrackingProvider;
+    public SkinnedCollisionHelper CollisionHelper;
     public BackgroundData m_lastFrameData = new BackgroundData();
     Transformation transformation;
 
     Texture2D kinectColorTexture;
     private float time;
     public float savePeriod;
+    public string loadFilename;
 
     [Header("Pointcloud Filter")]
     [SerializeField]
@@ -275,11 +279,42 @@ public class recordScript : MonoBehaviour
     public float filterThreshold;
     public bool ViewPointCloud;
 
+
+    [Header("Raycast Setting")]
+    [SerializeField]
+    Transform CameraOrigin;
+    public Camera sceneCamera, canvasCam;
+    [SerializeField]
+    float distanceThreshold;
+    [SerializeField]
+    float angleTreshold;
+    [SerializeField]
+    float completeThreshold;
+    [SerializeField]
+    Color brushColor = Color.red;
+    public Transform rayTarget;
+    public GameObject brushContainer;
+    public Sprite cursorPaint, cursorDecal; // Cursor for the differen functions 
+    public RenderTexture canvasTexture; // Render Texture that looks at our Base Texture and the painted brushes
+    public Material baseMaterial;
+    public Material normalMaterial;
+    [SerializeField]
+    int brushWindowSize; //The size of our brush
+    public float UpdatePeriod;
+    public bool useNormalmap = true;
+    public bool useDebug;
     float poseConfidence = 0;
     public float poseConfidenceThreshold;
 
+
     [SerializeField]
     UnityEngine.UI.RawImage ImageInput;
+
+    int nowFilled = 0;
+
+    static int textureWidth = 1024;
+    static int textureHeight = 1024;
+
 
     public bool LogSaveScreenshots;
 
@@ -291,6 +326,8 @@ public class recordScript : MonoBehaviour
     static int kinectHeight = 576;
 
     public bool rayCasting = false;
+    int brushCounter = 0, MAX_BRUSH_COUNT = 368640; //To avoid having millions of brushes
+    bool saving = false; //Flag to check if we are saving the texture
 
     //pt 수
     int num = kinectWidth * kinectHeight;
@@ -321,9 +358,13 @@ public class recordScript : MonoBehaviour
     bool nowRecording = false;
     bool nowLoading = false;
     SaveData mySaveData = new SaveData();
+    string now = System.DateTime.Now.ToString("yyyyMMddHHmmss");
+
+    int frameNum = 0;
 
     void Start()
     {
+
         //tracker ids needed for when there are two trackers
         const int TRACKER_ID = 0;
         m_skeletalTrackingProvider = new SkeletalTrackingProvider(TRACKER_ID);
@@ -382,41 +423,61 @@ public class recordScript : MonoBehaviour
             {
                 if (m_lastFrameData.NumOfBodies != 0)
                 {
-                    m_tracker.GetComponent<TrackerHandler>().updateTracker(m_lastFrameData);
+                    if (!nowLoading)
+                    {
+                        m_tracker.GetComponent<TrackerHandler>().updateTracker(m_lastFrameData);
+                    }
+
+                    vertices = m_tracker.GetComponent<TrackerHandler>().getVerticesData(m_lastFrameData);
+                    colors = m_tracker.GetComponent<TrackerHandler>().getColorsData(m_lastFrameData);
+                    indices = m_tracker.GetComponent<TrackerHandler>().getIndicesData(m_lastFrameData);
+                    body = m_tracker.GetComponent<TrackerHandler>().getBodyData(m_lastFrameData);
+
+                    for (int i = 0; i < m_lastFrameData.Bodies[0].JointPrecisions.Length; i++)
+                    {
+                        poseConfidence += (int)m_lastFrameData.Bodies[0].JointPrecisions[i];
+                    }
+                    poseConfidence /= m_lastFrameData.Bodies[0].JointPrecisions.Length;
+
+                    // print(poseConfidence);
+
+                    kinectColorTexture.SetPixels32(colors);
+                    kinectColorTexture.Apply();
+
+                    ImageInput.canvasRenderer.SetTexture(kinectColorTexture);
+
+
+
+
+
+                    if (nowRecording && savePeriod < time)
+                    {
+                        // verticesList.Add(vertices);
+                        SaveData.SerializableVector3Array serializableVector3Arr = new SaveData.SerializableVector3Array(vertices);
+                        SaveData.SerializableColor32 serializableColor = new SaveData.SerializableColor32(colors);
+                        SaveData.SerializableBody serializableBody = new SaveData.SerializableBody(body);
+                        verticesList.Add(serializableVector3Arr);
+                        colorList.Add(serializableColor);
+                        indicesList.Add(indices);
+                        bodyList.Add(serializableBody);
+                        Debug.Log($"{verticesList.Count}, {colorList.Count}, {indicesList.Count}, {bodyList.Count}");
+
+
+                        byte[] bytes = kinectColorTexture.EncodeToPNG();
+                        var dirPath = Application.dataPath + "/SaveStream/" + now + "/";
+                        if (!Directory.Exists(dirPath))
+                        {
+                            Directory.CreateDirectory(dirPath);
+                        }
+                        File.WriteAllBytes(dirPath + "InputImage_" + frameNum + ".png", bytes);
+
+
+                        time = 0f;
+                        frameNum += 1;
+                    }
                 }
 
-                vertices = m_tracker.GetComponent<TrackerHandler>().getVerticesData(m_lastFrameData);
-                colors = m_tracker.GetComponent<TrackerHandler>().getColorsData(m_lastFrameData);
-                indices = m_tracker.GetComponent<TrackerHandler>().getIndicesData(m_lastFrameData);
-                body = m_tracker.GetComponent<TrackerHandler>().getBodyData(m_lastFrameData);
 
-                for (int i = 0; i < m_lastFrameData.Bodies[0].JointPrecisions.Length; i++)
-                {
-                    poseConfidence += (int)m_lastFrameData.Bodies[0].JointPrecisions[i];
-                }
-                poseConfidence /= m_lastFrameData.Bodies[0].JointPrecisions.Length;
-
-                // print(poseConfidence);
-
-                kinectColorTexture.SetPixels32(colors);
-                kinectColorTexture.Apply();
-
-                ImageInput.canvasRenderer.SetTexture(kinectColorTexture);
-
-                if (nowRecording && savePeriod < time)
-                {
-                    // verticesList.Add(vertices);
-                    SaveData.SerializableVector3Array serializableVector3Arr = new SaveData.SerializableVector3Array(vertices);
-                    SaveData.SerializableColor32 serializableColor = new SaveData.SerializableColor32(colors);
-                    SaveData.SerializableBody serializableBody = new SaveData.SerializableBody(body);
-                    verticesList.Add(serializableVector3Arr);
-                    colorList.Add(serializableColor);
-                    indicesList.Add(indices);
-                    bodyList.Add(serializableBody);
-                    Debug.Log($"{verticesList.Count}, {colorList.Count}, {indicesList.Count}, {bodyList.Count}");
-
-                    time = 0f;
-                }
                 
 
                 
@@ -445,7 +506,7 @@ public class recordScript : MonoBehaviour
 
         // Save 함수 만들기
 
-        string now = System.DateTime.Now.ToString("yyyyMMddHHmmss");
+
         string fileName = Application.dataPath + "/SaveStream/" + now + "_SaveStream.dat";
 
         BinaryFormatter bf = new BinaryFormatter();
@@ -463,6 +524,166 @@ public class recordScript : MonoBehaviour
 
     }
 
+
+    public Texture2D toTexture2D(RenderTexture rTex)
+    {
+        Texture2D dest = new Texture2D(rTex.width, rTex.height, TextureFormat.RGBA32, false);
+        dest.Apply(false);
+        Graphics.CopyTexture(rTex, dest);
+        return dest;
+    }
+
+    bool HitTestUVPosition(ref Vector3 uvWorldPosition, ref Vector3 rayTargetTransform, ref float hitAngle, ref Vector3 hitNormal)
+    {
+
+        RaycastHit hit;
+        Vector3 rayDirection = rayTargetTransform - CameraOrigin.position;
+        if (Physics.Raycast(CameraOrigin.position, rayDirection, out hit, 100))
+        {
+            MeshCollider meshCollider = hit.collider as MeshCollider;
+            hitNormal = hit.normal;
+            hitAngle = GetAngle(hitNormal, rayDirection);
+
+
+            if (meshCollider == null || meshCollider.sharedMesh == null)
+                return false;
+            if (Vector3.Magnitude(hit.point - rayTargetTransform) > distanceThreshold || hitAngle > angleTreshold)
+            {
+                return false;
+            }
+
+            Vector2 pixelUV = new Vector2(hit.textureCoord.x, hit.textureCoord.y);
+            //Debug.Log($"{canvasCam.orthographicSize.ToString()}");
+            //uvWorldPosition.x = pixelUV.x - canvasCam.orthographicSize;//To center the UV on X
+            //uvWorldPosition.y = pixelUV.y - canvasCam.orthographicSize;//To center the UV on Y
+            uvWorldPosition.x = pixelUV.x;
+            uvWorldPosition.y = pixelUV.y;
+            uvWorldPosition.z = 0.0f;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
+
+    public static float GetAngle(Vector3 N, Vector3 A)
+    {
+        return Mathf.Atan(-Vector2.Dot(N, A) / (N.magnitude * A.magnitude)) * Mathf.Rad2Deg;
+    }
+
+    static Vector3 calculateNormal(Vector3 point, Vector3 point_right, Vector3 point_up, Vector3 point_left, Vector3 point_down)
+    {
+        /*
+                      point_up
+           . (normal2)   ｜    . (normal1)  
+                         ｜
+        point_left――――――point――――――point_right
+                         ｜        
+           . (normal3)   ｜    . (normal4)  
+                     point_down
+
+        return normal at point, by averaging normal of 4 triangle composed with (point, right, up), (point, up, left), (point, left, down), (point, down, right)
+         */
+        Vector3 normal1 = Vector3.Cross(point_right - point, point_up - point);
+        Vector3 normal2 = Vector3.Cross(point_up - point, point_left - point);
+        Vector3 normal3 = Vector3.Cross(point_left - point, point_down - point);
+        Vector3 normal4 = Vector3.Cross(point_down - point, point_right - point);
+
+        Vector3 normal = (normal1 + normal2 + normal3 + normal4) / 4;
+
+        return normal;
+    }
+
+    static Color normalToColor(Vector3 normal)
+    {
+        /*
+        ref : https://docs.unity3d.com/Manual/StandardShaderMaterialParameterNormalMap.html
+        
+         */
+
+        Color normalMapColor = new Color(normal.x / 2 + 0.5f, normal.y / 2 + 0.5f, normal.z / 2 + 0.5f, 1f);
+        return normalMapColor;
+    }
+
+    Texture2D postProcessing(Texture2D inputTexture)
+    {
+        Texture2D resultTexture = inputTexture;
+        for (int i = 0; i < textureWidth; i++)
+        {
+            for (int j = 0; j < textureHeight; j++)
+            {
+                if (!(istexturefilled[i, j])) // && (i + j)%10 == 0)
+                {
+                    int squareSize = 1;
+
+                    while (squareSize < textureWidth)
+                    {
+                        /*
+                    
+                    2――――――1
+                    ｜     ｜
+                    ｜ i,j ｜
+                    ｜     ｜ 
+                    3――――――4
+                    squareSize = (1 to 2) / 2
+                     */
+
+                        int w1_pointer = Mathf.Min(textureWidth - 1, i + squareSize);
+                        int w2_pointer = Mathf.Max(0, i - squareSize);
+                        int h1_pointer = Mathf.Min(textureHeight - 1, j + squareSize);
+                        int h2_pointer = Mathf.Max(0, j - squareSize);
+
+                        List<Color> colorList = new List<Color>();
+
+                        for (int w_pointer = w2_pointer; w_pointer < w1_pointer; w_pointer++)
+                        {
+                            // 3->4
+                            if (istexturefilled[w_pointer, h1_pointer])
+                            {
+                                colorList.Add(inputTexture.GetPixel(w_pointer, h1_pointer));
+                            }
+                            if (istexturefilled[w_pointer, h2_pointer])
+                            {
+                                colorList.Add(inputTexture.GetPixel(w_pointer, h2_pointer));
+                            }
+                        }
+                        for (int h_pointer = h2_pointer; h_pointer < h1_pointer; h_pointer++)
+                        {
+                            if (istexturefilled[w1_pointer, h_pointer])
+                            {
+                                colorList.Add(inputTexture.GetPixel(w1_pointer, h_pointer));
+                            }
+                            if (istexturefilled[w2_pointer, h_pointer])
+                            {
+                                colorList.Add(inputTexture.GetPixel(w2_pointer, h_pointer));
+                            }
+                        }
+                        if (colorList.Count > 0)
+                        {
+                            Vector4 colorVector = Vector4.zero;
+                            foreach (Color colorCandidate in colorList)
+                            {
+                                colorVector += (Vector4)colorCandidate;
+                            }
+                            Color colorValue = (Color)(colorVector / colorList.Count);
+                            resultTexture.SetPixel(i, j, colorValue);
+                            break;
+                        }
+                        else
+                        {
+                            squareSize++;
+                        }
+                    }
+                }
+            }
+        }
+
+        return resultTexture;
+    }
+
+
     public void triggerLoad()
     {
         if (nowRecording)
@@ -474,7 +695,7 @@ public class recordScript : MonoBehaviour
         
         BinaryFormatter bf = new BinaryFormatter();
 
-        string fileName = Application.dataPath + "/SaveStream/" + "20230226223919_SaveStream.dat";
+        string fileName = Application.dataPath + "/SaveStream/" + loadFilename;
         nowRecording = false;
         nowLoading = true;
 
@@ -500,37 +721,240 @@ public class recordScript : MonoBehaviour
         //    Debug.Log(loaded[5]);
         //}
 
+        Texture2D tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
+        Texture2D normalMap = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
+
+        makeDir("Assets/SaveStream/");
+
         for (int index_all = 0; index_all < myLoadData.indicesSave.Count; index_all += 1)
         {
             int[] indexLoaded = myLoadData.indicesSave[index_all];
-            Color32[] colorLoaded = myLoadData.colorSave[index_all].ToColor32Array();
-            Vector3[] verticesLoaded = myLoadData.verticesSave[index_all].ToVector3Array();
+            Color32[] colors = myLoadData.colorSave[index_all].ToColor32Array();
+            Vector3[] vertices= myLoadData.verticesSave[index_all].ToVector3Array();
             Body bodyLoaded = myLoadData.bodySave[index_all].ToBody();
+            CollisionHelper.UpdateCollisionMesh();
+
+            // Including renderSkeleton function
+            Quaternion[] jointRotation = m_loader.GetComponent<TrackerLoader>().returnJointRotationsSkeleton(bodyLoaded);
+            SMPL_Avatar.GetComponent<AvatarLoader>().AnimationUpdate(jointRotation);
 
             if (ViewPointCloud && nowLoading)
             {
-                mesh.vertices = verticesLoaded;
-                mesh.colors32 = colorLoaded;
+                mesh.vertices = vertices;
+                mesh.colors32 = colors;
                 mesh.SetIndices(indexLoaded, MeshTopology.Points, 0);
                 GetComponent<MeshRenderer>().enabled = true;
+
             }
 
-            Debug.Log(bodyLoaded.JointPositions3D[1].X);
+            // Debug.Log(bodyLoaded.JointPositions3D[1].X);
             Debug.Log($"{index_all} / {myLoadData.indicesSave.Count} ");
-            
+
+            brushCounter = 0;
+
+            //if (updateNumber > 0)
+            //{
+            //    tex = (Texture2D)baseMaterial.mainTexture;
+            //}
+
+
+
+            for (int index = 0; index < num; index = index + 1)
+            {
+                Vector3 vertex = vertices[index];
+                
+                if (vertex.z < 2.0f) // && poseConfidence > poseConfidenceThreshold)
+                {
+                    Color32 color = colors[index];
+                    float hitAngle = 0;
+                    Vector3 hitNormal = Vector3.zero;
+
+                    Vector3 uvWorldPosition = Vector3.zero;
+
+                    if (HitTestUVPosition(ref uvWorldPosition, ref vertex, ref hitAngle, ref hitNormal))
+                    {
+                        int x_coord = (int)(uvWorldPosition.x * textureWidth);
+                        int y_coord = (int)(uvWorldPosition.y * textureHeight);
+                        
+
+                        if (true)
+                        {
+                            //SetPixel with Circle + Filter
+                            if (istexturefilled[x_coord, y_coord] == false)
+                            {
+                                istexturefilled[x_coord, y_coord] = true;
+                                nowFilled++;
+                            }
+                            for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
+                            {
+                                for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
+                                {
+                                    Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
+                                    Vector2 pointRelativePosition = new Vector2(i, j);
+                                    float distanceFromCenter = pointRelativePosition.magnitude;
+                                    // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
+                                    if (i == 0 && j == 0)
+                                    {
+                                        tex.SetPixel(x_coord + i, y_coord + j, color);
+                                    }
+                                    else if (istexturefilled[x_coord + i, y_coord + j] == true)
+                                    {
+                                        Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                                        tex.SetPixel(x_coord + i, y_coord + j, brushColor);
+                                    }
+                                    else
+                                    {
+                                        tex.SetPixel(x_coord + i, y_coord + j, color);
+                                    }
+
+
+                                    //if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
+                                    //    istexturefilled[x_coord + i, y_coord + j] = true;
+
+                                }
+                            }
+
+                            //SetPixel with cross
+                            //tex.SetPixel(x_coord, y_coord, color);
+                            //tex.SetPixel(x_coord - 1, y_coord, color);
+                            //tex.SetPixel(x_coord + 1, y_coord, color);
+                            //tex.SetPixel(x_coord, y_coord - 1, color);
+                            //tex.SetPixel(x_coord, y_coord + 1, color);
+
+
+                            // SetPixel with square
+                            //Color[] colors = Enumerable.Repeat<Color>(color, brushWindowSize * brushWindowSize).ToArray<Color>();
+                            //tex.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
+
+                            //if (istexturefilled[x_coord, y_coord] == false)
+                            //{
+                            //    istexturefilled[x_coord, y_coord] = true;
+                            //    nowFilled++;
+                            //}
+
+
+
+
+                            brushCounter++;
+                        }
+
+                        if (useNormalmap)
+                        {
+                            if (!(index % kinectWidth == 0 || index % kinectWidth == kinectWidth - 1 || index < kinectWidth || index > num - kinectWidth))
+                            {
+                                Vector3 normal = calculateNormal(vertex, vertices[index + 1], vertices[index - kinectWidth], vertices[index - 1], vertices[index + kinectWidth]);
+                                //if (index % 1000 == 0)
+                                //{
+                                //    Debug.Log(normal.normalized.ToString());
+                                //    Debug.Log(hitNormal.magnitude); 
+                                //}
+                                Color normalColor = normalToColor((normal.normalized - hitNormal).normalized);
+                                Color[] colors_normal = Enumerable.Repeat<Color>(normalColor, brushWindowSize * brushWindowSize).ToArray<Color>();
+                                normalMap.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors_normal);
+                            }
+                        }
+                    }
+                }
+            }
+            tex.Apply();
+            normalMap.Apply();
+            // RenderTexture.active = null;
+            baseMaterial.mainTexture = tex; //Put the painted texture as the base
+
+            updateNumber += 1;
+            rayCasting = false;
+
+            //if (nowFilled > textureWidth * textureHeight * completeThreshold)
+            //{
+            //    normalMaterial.mainTexture = normalMap;
+            //    SaveTextureToFile();
+            //    Debug.Log(nowFilled.ToString());
+            //    Application.Quit();
+            //}
+            //else
+            //{
+            //    Debug.Log(nowFilled.ToString() + " / " + (textureWidth * textureHeight * completeThreshold).ToString());
+            //}
+
+            Debug.Log(nowFilled.ToString() + " / " + (textureWidth * textureHeight * completeThreshold).ToString());
+
+
+            // Log how filled?
+
+            //for (int i = 0; i < 1024; i++)
+            //{
+            //    for (int j = 0; j < 1024; j++)
+            //    {
+            //        if (istexturefilled[i, j] == true)
+            //        {
+            //            nowFilled++;
+            //        }
+            //    }
+            //}
+            // Debug.Log(nowFilled);
+            // log_isfilled.Add(nowFilled);
+
+            //if (updateNumber % 3 == 0 && LogSaveScreenshots)
+            //{
+            //    SaveScreenshot();
+            //    SaveTextureToFile();
+
+            //}
+
         }
 
 
-
-
+        normalMaterial.mainTexture = normalMap;
+        SaveTextureToFile();
+        Debug.Log(nowFilled.ToString());
+        Application.Quit();
 
 
     }
+
+    public void SaveTextureToFile()
+    {
+        Texture2D texture = postProcessing((Texture2D)baseMaterial.mainTexture);
+        byte[] bytes = texture.EncodeToPNG();
+        
+
+        string directoryName = loadFilename.Substring(0, loadFilename.Length - 4);
+        var dirPath = Application.dataPath + "/SaveStream/" + directoryName + "/";
+        if (!Directory.Exists(dirPath))
+        {
+            Directory.CreateDirectory(dirPath);
+        }
+        File.WriteAllBytes(dirPath + "Image_" + now + "_texture.png", bytes);
+        Debug.Log($"Saved to {dirPath + "Image_" + now + "_texture.png"}");
+
+        if (useNormalmap)
+        {
+            Texture2D normalMap = postProcessing((Texture2D)normalMaterial.mainTexture);
+            byte[] bytes_normal = normalMap.EncodeToPNG();
+
+            if (!Directory.Exists(dirPath))
+            {
+                Directory.CreateDirectory(dirPath);
+            }
+            File.WriteAllBytes(dirPath + "Image_" + now + "_normal.png", bytes_normal);
+            Debug.Log($"Saved to {dirPath + "Image_" + now + "_normal.png"}");
+        }
+    }
+
     void OnApplicationQuit()
     {
         if (m_skeletalTrackingProvider != null)
         {
             m_skeletalTrackingProvider.Dispose();
+        }
+    }
+
+    private void makeDir(string filepath)
+    {
+        string directoryName = loadFilename.Substring(0, loadFilename.Length - 4);
+        if (!Directory.Exists(filepath + directoryName))
+        {
+            Directory.CreateDirectory(filepath + directoryName);
         }
     }
 }

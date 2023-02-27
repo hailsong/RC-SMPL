@@ -62,6 +62,8 @@ public class PuppetAvatar : MonoBehaviour
                     absOffset = GetSkeletonBone(PuppetAnimator, transform.name).rotation * absOffset;
                 }
                 absoluteOffsetMap[(JointId)i] = absOffset;
+
+                // Debug.Log($"Puppet Avatar.cs Start() / {absOffset.eulerAngles}");
             }
         }
     }
@@ -102,4 +104,5 @@ public class PuppetAvatar : MonoBehaviour
         }
     }
 
+    
 }

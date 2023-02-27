@@ -450,7 +450,7 @@ MonoBehaviour:
   canvasCam: {fileID: 720754041}
   distanceThreshold: 0.2
   angleTreshold: 30
-  completeThreshold: 0.5
+  completeThreshold: 0.2
   brushColor: {r: 1, g: 0, b: 0, a: 1}
   rayTarget: {fileID: 0}
   brushContainer: {fileID: 1512370505}
@@ -461,7 +461,7 @@ MonoBehaviour:
   normalMaterial: {fileID: 2100000, guid: 6413374c8f46ef24ea03193113dc4cfd, type: 2}
   brushWindowSize: 3
   UpdatePeriod: 1.5
-  useNormalmap: 0
+  useNormalmap: 1
   useDebug: 0
   poseConfidenceThreshold: 0.4
   confidenceDebug: {fileID: 1900016052}
@@ -482,7 +482,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 300952142}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
