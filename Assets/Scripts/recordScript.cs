@@ -268,7 +268,7 @@ public class recordScript : MonoBehaviour
     Transformation transformation;
 
     Texture2D kinectColorTexture;
-    private float time;
+    private float time = -5f;
     public float savePeriod;
     public string loadFilename;
 
@@ -305,6 +305,13 @@ public class recordScript : MonoBehaviour
     public bool useDebug;
     float poseConfidence = 0;
     public float poseConfidenceThreshold;
+    [SerializeField]
+    public int startFrameOffset;
+    public int endFrameOffset;
+    public int startIndexOffset;
+    public int endIndexOffset;
+
+    public string maskDirectory;
 
 
     [SerializeField]
@@ -318,6 +325,10 @@ public class recordScript : MonoBehaviour
 
     public bool LogSaveScreenshots;
 
+    public Camera maskCamera;
+    public Camera virtualCamera;
+    
+
     System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
     public bool[,] istexturefilled = new bool[1024, 1024];
@@ -328,6 +339,7 @@ public class recordScript : MonoBehaviour
     public bool rayCasting = false;
     int brushCounter = 0, MAX_BRUSH_COUNT = 368640; //To avoid having millions of brushes
     bool saving = false; //Flag to check if we are saving the texture
+    List<int> log_isfilled = new List<int>() { 0 };
 
     //pt 수
     int num = kinectWidth * kinectHeight;
@@ -362,9 +374,20 @@ public class recordScript : MonoBehaviour
 
     int frameNum = 0;
 
+
+    BinaryFormatter bf;
+    string fileName;
+    FileStream fs;
+    SaveData myLoadData;
+    Texture2D tex;
+    Texture2D normalMap;
+    int index_load = 0;
+
+    Texture2D mask_all;
+    Texture2D mask_except;
+
     void Start()
     {
-
         //tracker ids needed for when there are two trackers
         const int TRACKER_ID = 0;
         m_skeletalTrackingProvider = new SkeletalTrackingProvider(TRACKER_ID);
@@ -404,6 +427,30 @@ public class recordScript : MonoBehaviour
 
         watch.Start();
 
+
+
+
+        bf = new BinaryFormatter();
+
+        fileName = Application.dataPath + "/SaveStream/" + loadFilename;
+
+
+        fs = new FileStream(fileName, FileMode.Open);
+
+        myLoadData = bf.Deserialize(fs) as SaveData;
+
+        Debug.Log(myLoadData.indicesSave);
+
+        tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
+        normalMap = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
+
+        index_load = startFrameOffset;
+
+        loadMasks(maskDirectory);
+        Debug.Log($"Mask Dimension, {mask_all.dimension}");
+
+        makeDir("Assets/SaveStream/");
+
     }
 
     void FixedUpdate()
@@ -428,10 +475,12 @@ public class recordScript : MonoBehaviour
                         m_tracker.GetComponent<TrackerHandler>().updateTracker(m_lastFrameData);
                     }
 
+                    body = m_tracker.GetComponent<TrackerHandler>().getBodyData(m_lastFrameData);
                     vertices = m_tracker.GetComponent<TrackerHandler>().getVerticesData(m_lastFrameData);
                     colors = m_tracker.GetComponent<TrackerHandler>().getColorsData(m_lastFrameData);
                     indices = m_tracker.GetComponent<TrackerHandler>().getIndicesData(m_lastFrameData);
-                    body = m_tracker.GetComponent<TrackerHandler>().getBodyData(m_lastFrameData);
+
+                    // Debug.Log($"{body.Length}, {vertices.Length}, {colors.Length}, {indices.Length}");
 
                     for (int i = 0; i < m_lastFrameData.Bodies[0].JointPrecisions.Length; i++)
                     {
@@ -456,24 +505,33 @@ public class recordScript : MonoBehaviour
                         SaveData.SerializableVector3Array serializableVector3Arr = new SaveData.SerializableVector3Array(vertices);
                         SaveData.SerializableColor32 serializableColor = new SaveData.SerializableColor32(colors);
                         SaveData.SerializableBody serializableBody = new SaveData.SerializableBody(body);
+                        bodyList.Add(serializableBody);
                         verticesList.Add(serializableVector3Arr);
                         colorList.Add(serializableColor);
                         indicesList.Add(indices);
-                        bodyList.Add(serializableBody);
+                        
                         Debug.Log($"{verticesList.Count}, {colorList.Count}, {indicesList.Count}, {bodyList.Count}");
 
-
                         byte[] bytes = kinectColorTexture.EncodeToPNG();
+
+                        Texture2D MaskTexture2D = RTImage(maskCamera);
+                        byte[] bytes_mask = MaskTexture2D.EncodeToPNG();
+
                         var dirPath = Application.dataPath + "/SaveStream/" + now + "/";
                         if (!Directory.Exists(dirPath))
                         {
                             Directory.CreateDirectory(dirPath);
                         }
                         File.WriteAllBytes(dirPath + "InputImage_" + frameNum + ".png", bytes);
+                        File.WriteAllBytes(dirPath + "InputMask_" + frameNum + ".png", bytes_mask);
+
+                        
 
 
                         time = 0f;
                         frameNum += 1;
+
+                       
                     }
                 }
 
@@ -490,6 +548,250 @@ public class recordScript : MonoBehaviour
                 // Save {vertices, colors, indices, 
             }
 
+
+        }
+
+    }
+
+    private void Update()
+    {
+        if (nowLoading)
+        {
+            int[] indexLoaded = myLoadData.indicesSave[index_load];
+            Color32[] colors = myLoadData.colorSave[index_load].ToColor32Array();
+            Vector3[] vertices = myLoadData.verticesSave[index_load].ToVector3Array();
+            Body bodyLoaded = myLoadData.bodySave[index_load].ToBody();
+
+            // Including renderSkeleton function
+            Quaternion[] jointRotation = m_loader.GetComponent<TrackerLoader>().returnJointRotationsSkeleton(bodyLoaded);
+            SMPL_Avatar.GetComponent<AvatarLoader>().AnimationUpdate(jointRotation);
+
+            CollisionHelper.UpdateCollisionMesh();
+
+
+            if (ViewPointCloud && nowLoading)
+            {
+                mesh.vertices = vertices;
+                mesh.colors32 = colors;
+                mesh.SetIndices(indexLoaded, MeshTopology.Points, 0);
+                GetComponent<MeshRenderer>().enabled = true;
+
+            }
+
+            // Debug.Log(bodyLoaded.JointPositions3D[1].X);
+            Debug.Log($"{index_load} / {myLoadData.indicesSave.Count} ");
+
+            brushCounter = 0;
+
+            //if (updateNumber > 0)
+            //{
+            //    tex = (Texture2D)baseMaterial.mainTexture;
+            //}
+
+
+            for (int index = startIndexOffset; index < num - endIndexOffset; index = index + 1)
+            {
+                Vector3 vertex = vertices[index];
+
+                if (vertex.z < 2.0f) // && poseConfidence > poseConfidenceThreshold)
+                {
+                    Color32 color = colors[index];
+                    float hitAngle = 0;
+                    Vector3 hitNormal = Vector3.zero;
+
+                    Vector3 uvWorldPosition = Vector3.zero;
+
+                    if (HitTestUVPosition(ref uvWorldPosition, ref vertex, ref hitAngle, ref hitNormal))
+                    {
+                        int x_coord = (int)(uvWorldPosition.x * textureWidth);
+                        int y_coord = (int)(uvWorldPosition.y * textureHeight);
+
+                        if (mask_except.GetPixel(x_coord, y_coord) == Color.white)
+                        {
+                            continue;
+                        }
+
+
+                        if (true)
+                        {
+                            //SetPixel with Circle + Filter
+                            if (istexturefilled[x_coord, y_coord] == false)
+                            {
+                                istexturefilled[x_coord, y_coord] = true;
+                                nowFilled++;
+                            }
+                            for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
+                            {
+                                for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
+                                {
+                                    Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
+                                    Vector2 pointRelativePosition = new Vector2(i, j);
+                                    float distanceFromCenter = pointRelativePosition.magnitude;
+                                    // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
+                                    if (i == 0 && j == 0)
+                                    {
+                                        tex.SetPixel(x_coord + i, y_coord + j, color);
+                                    }
+                                    else if (istexturefilled[x_coord + i, y_coord + j] == true)
+                                    {
+                                        Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                                        tex.SetPixel(x_coord + i, y_coord + j, brushColor);
+                                    }
+                                    else
+                                    {
+                                        tex.SetPixel(x_coord + i, y_coord + j, color);
+                                    }
+
+
+                                    //if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
+                                    //    istexturefilled[x_coord + i, y_coord + j] = true;
+
+                                }
+                            }
+
+                            //SetPixel with cross
+                            //tex.SetPixel(x_coord, y_coord, color);
+                            //tex.SetPixel(x_coord - 1, y_coord, color);
+                            //tex.SetPixel(x_coord + 1, y_coord, color);
+                            //tex.SetPixel(x_coord, y_coord - 1, color);
+                            //tex.SetPixel(x_coord, y_coord + 1, color);
+
+
+                            // SetPixel with square
+                            //Color[] colors = Enumerable.Repeat<Color>(color, brushWindowSize * brushWindowSize).ToArray<Color>();
+                            //tex.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
+
+                            //if (istexturefilled[x_coord, y_coord] == false)
+                            //{
+                            //    istexturefilled[x_coord, y_coord] = true;
+                            //    nowFilled++;
+                            //}
+
+
+
+
+                            brushCounter++;
+                        }
+
+                        if (useNormalmap)
+                        {
+                            if (!(index % kinectWidth == 0 || index % kinectWidth == kinectWidth - 1 || index < kinectWidth || index > num - kinectWidth))
+                            {
+                                Vector3 normal = calculateNormal(vertex, vertices[index + 1], vertices[index - kinectWidth], vertices[index - 1], vertices[index + kinectWidth]);
+                                //if (index % 1000 == 0)
+                                //{
+                                //    Debug.Log(normal.normalized.ToString());
+                                //    Debug.Log(hitNormal.magnitude); 
+                                //}
+                                Color normalColor = normalToColor((normal.normalized - hitNormal).normalized);
+                                color = normalColor;
+
+                                for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
+                                {
+                                    for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
+                                    {
+                                        Color32 color_origin = normalMap.GetPixel(x_coord + i, y_coord + j);
+                                        Vector2 pointRelativePosition = new Vector2(i, j);
+                                        float distanceFromCenter = pointRelativePosition.magnitude;
+                                        // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
+                                        if (i == 0 && j == 0)
+                                        {
+                                            normalMap.SetPixel(x_coord + i, y_coord + j, color);
+                                        }
+                                        else if (istexturefilled[x_coord + i, y_coord + j] == true)
+                                        {
+                                            Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                                            normalMap.SetPixel(x_coord + i, y_coord + j, brushColor);
+                                        }
+                                        else
+                                        {
+                                            normalMap.SetPixel(x_coord + i, y_coord + j, color);
+                                        }
+
+
+                                        //if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
+                                        //    istexturefilled[x_coord + i, y_coord + j] = true;
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            tex.Apply();
+            normalMap.Apply();
+            // RenderTexture.active = null;
+            baseMaterial.mainTexture = tex; //Put the painted texture as the base
+
+            rayCasting = false;
+
+            //if (nowFilled > textureWidth * textureHeight * completeThreshold)
+            //{
+            //    normalMaterial.mainTexture = normalMap;
+            //    SaveTextureToFile();
+            //    Debug.Log(nowFilled.ToString());
+            //    Application.Quit();
+            //}
+            //else
+            //{
+            //    Debug.Log(nowFilled.ToString() + " / " + (textureWidth * textureHeight * completeThreshold).ToString());
+            //}
+
+            Debug.Log(nowFilled.ToString() + " / " + (textureWidth * textureHeight * completeThreshold).ToString());
+
+
+            Texture2D VirtualTexture2D = RTImage(virtualCamera);
+            byte[] bytes_render = VirtualTexture2D.EncodeToPNG();
+
+            string directoryName = loadFilename.Substring(0, loadFilename.Length - 4);
+            var dirPath = Application.dataPath + "/SaveStream/" + directoryName + "/";
+            if (!Directory.Exists(dirPath))
+            {
+                Directory.CreateDirectory(dirPath);
+            }
+
+            
+            File.WriteAllBytes(dirPath + "Image_" + index_load + "_render.png", bytes_render);
+
+
+
+            // Log how filled?
+
+            //for (int i = 0; i < 1024; i++)
+            //{
+            //    for (int j = 0; j < 1024; j++)
+            //    {
+            //        if (istexturefilled[i, j] == true)
+            //        {
+            //            nowFilled++;
+            //        }
+            //    }
+            //}
+            Debug.Log(nowFilled);
+            log_isfilled.Add(nowFilled);
+
+            index_load += 1;
+
+            //if (updateNumber % 3 == 0 && LogSaveScreenshots)
+            //{
+            //    SaveScreenshot();
+            //    SaveTextureToFile();
+
+            //}
+
+
+
+
+            if (index_load >= myLoadData.indicesSave.Count - endFrameOffset)
+            {
+                normalMaterial.mainTexture = normalMap;
+                SaveTextureToFile();
+                saveLog();
+                Debug.Log(nowFilled.ToString());
+                Application.Quit();
+                nowLoading = false;
+            }
 
         }
     }
@@ -522,6 +824,26 @@ public class recordScript : MonoBehaviour
 
         Application.Quit();
 
+    }
+
+    private Texture2D RTImage(Camera targetCamera)
+    {
+        Rect rect = new Rect(0, 0, kinectWidth, kinectHeight);
+        RenderTexture renderTexture = new RenderTexture(kinectWidth, kinectHeight, 24);
+        Texture2D screenShot = new Texture2D(kinectWidth, kinectHeight, TextureFormat.RGBA32, false);
+
+        targetCamera.targetTexture = renderTexture;
+        targetCamera.Render();
+
+        RenderTexture.active = renderTexture;
+        screenShot.ReadPixels(rect, 0, 0);
+
+        targetCamera.targetTexture = null;
+        RenderTexture.active = null;
+
+        Destroy(renderTexture);
+        renderTexture = null;
+        return screenShot;
     }
 
 
@@ -614,6 +936,12 @@ public class recordScript : MonoBehaviour
         {
             for (int j = 0; j < textureHeight; j++)
             {
+
+                if (mask_except.GetPixel(i, j) == Color.white || mask_all.GetPixel(i, j) == Color.black)
+                {
+                    continue;
+                }
+
                 if (!(istexturefilled[i, j])) // && (i + j)%10 == 0)
                 {
                     int squareSize = 1;
@@ -692,222 +1020,10 @@ public class recordScript : MonoBehaviour
             Application.Quit();
         }
 
-        
-        BinaryFormatter bf = new BinaryFormatter();
-
-        string fileName = Application.dataPath + "/SaveStream/" + loadFilename;
         nowRecording = false;
         nowLoading = true;
 
-        FileStream fs = new FileStream(fileName, FileMode.Open);
 
-        SaveData myLoadData = bf.Deserialize(fs) as SaveData;
-
-        // Debug.Log(myLoadData.colorSave);
-        // Debug.Log(myLoadData.bodySave);
-        Debug.Log(myLoadData.indicesSave);
-
-
-        //foreach (SaveData.SerializableColor32 S_Color32 in myLoadData.colorSave)
-        //{
-        //    Color32[] loaded = S_Color32.ToColor32Array();
-        //    Debug.Log(loaded.Length);
-        //    Debug.Log(loaded[5]);
-        //}
-        //foreach (SaveData.SerializableVector3Array S_Vector_Arr in myLoadData.verticesSave)
-        //{
-        //    Vector3[] loaded = S_Vector_Arr.ToVector3Array();
-        //    Debug.Log(loaded.Length);
-        //    Debug.Log(loaded[5]);
-        //}
-
-        Texture2D tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
-        Texture2D normalMap = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
-
-        makeDir("Assets/SaveStream/");
-
-        for (int index_all = 0; index_all < myLoadData.indicesSave.Count; index_all += 1)
-        {
-            int[] indexLoaded = myLoadData.indicesSave[index_all];
-            Color32[] colors = myLoadData.colorSave[index_all].ToColor32Array();
-            Vector3[] vertices= myLoadData.verticesSave[index_all].ToVector3Array();
-            Body bodyLoaded = myLoadData.bodySave[index_all].ToBody();
-            CollisionHelper.UpdateCollisionMesh();
-
-            // Including renderSkeleton function
-            Quaternion[] jointRotation = m_loader.GetComponent<TrackerLoader>().returnJointRotationsSkeleton(bodyLoaded);
-            SMPL_Avatar.GetComponent<AvatarLoader>().AnimationUpdate(jointRotation);
-
-            if (ViewPointCloud && nowLoading)
-            {
-                mesh.vertices = vertices;
-                mesh.colors32 = colors;
-                mesh.SetIndices(indexLoaded, MeshTopology.Points, 0);
-                GetComponent<MeshRenderer>().enabled = true;
-
-            }
-
-            // Debug.Log(bodyLoaded.JointPositions3D[1].X);
-            Debug.Log($"{index_all} / {myLoadData.indicesSave.Count} ");
-
-            brushCounter = 0;
-
-            //if (updateNumber > 0)
-            //{
-            //    tex = (Texture2D)baseMaterial.mainTexture;
-            //}
-
-
-
-            for (int index = 0; index < num; index = index + 1)
-            {
-                Vector3 vertex = vertices[index];
-                
-                if (vertex.z < 2.0f) // && poseConfidence > poseConfidenceThreshold)
-                {
-                    Color32 color = colors[index];
-                    float hitAngle = 0;
-                    Vector3 hitNormal = Vector3.zero;
-
-                    Vector3 uvWorldPosition = Vector3.zero;
-
-                    if (HitTestUVPosition(ref uvWorldPosition, ref vertex, ref hitAngle, ref hitNormal))
-                    {
-                        int x_coord = (int)(uvWorldPosition.x * textureWidth);
-                        int y_coord = (int)(uvWorldPosition.y * textureHeight);
-                        
-
-                        if (true)
-                        {
-                            //SetPixel with Circle + Filter
-                            if (istexturefilled[x_coord, y_coord] == false)
-                            {
-                                istexturefilled[x_coord, y_coord] = true;
-                                nowFilled++;
-                            }
-                            for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
-                            {
-                                for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
-                                {
-                                    Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
-                                    Vector2 pointRelativePosition = new Vector2(i, j);
-                                    float distanceFromCenter = pointRelativePosition.magnitude;
-                                    // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
-                                    if (i == 0 && j == 0)
-                                    {
-                                        tex.SetPixel(x_coord + i, y_coord + j, color);
-                                    }
-                                    else if (istexturefilled[x_coord + i, y_coord + j] == true)
-                                    {
-                                        Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
-                                        tex.SetPixel(x_coord + i, y_coord + j, brushColor);
-                                    }
-                                    else
-                                    {
-                                        tex.SetPixel(x_coord + i, y_coord + j, color);
-                                    }
-
-
-                                    //if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
-                                    //    istexturefilled[x_coord + i, y_coord + j] = true;
-
-                                }
-                            }
-
-                            //SetPixel with cross
-                            //tex.SetPixel(x_coord, y_coord, color);
-                            //tex.SetPixel(x_coord - 1, y_coord, color);
-                            //tex.SetPixel(x_coord + 1, y_coord, color);
-                            //tex.SetPixel(x_coord, y_coord - 1, color);
-                            //tex.SetPixel(x_coord, y_coord + 1, color);
-
-
-                            // SetPixel with square
-                            //Color[] colors = Enumerable.Repeat<Color>(color, brushWindowSize * brushWindowSize).ToArray<Color>();
-                            //tex.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
-
-                            //if (istexturefilled[x_coord, y_coord] == false)
-                            //{
-                            //    istexturefilled[x_coord, y_coord] = true;
-                            //    nowFilled++;
-                            //}
-
-
-
-
-                            brushCounter++;
-                        }
-
-                        if (useNormalmap)
-                        {
-                            if (!(index % kinectWidth == 0 || index % kinectWidth == kinectWidth - 1 || index < kinectWidth || index > num - kinectWidth))
-                            {
-                                Vector3 normal = calculateNormal(vertex, vertices[index + 1], vertices[index - kinectWidth], vertices[index - 1], vertices[index + kinectWidth]);
-                                //if (index % 1000 == 0)
-                                //{
-                                //    Debug.Log(normal.normalized.ToString());
-                                //    Debug.Log(hitNormal.magnitude); 
-                                //}
-                                Color normalColor = normalToColor((normal.normalized - hitNormal).normalized);
-                                Color[] colors_normal = Enumerable.Repeat<Color>(normalColor, brushWindowSize * brushWindowSize).ToArray<Color>();
-                                normalMap.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors_normal);
-                            }
-                        }
-                    }
-                }
-            }
-            tex.Apply();
-            normalMap.Apply();
-            // RenderTexture.active = null;
-            baseMaterial.mainTexture = tex; //Put the painted texture as the base
-
-            updateNumber += 1;
-            rayCasting = false;
-
-            //if (nowFilled > textureWidth * textureHeight * completeThreshold)
-            //{
-            //    normalMaterial.mainTexture = normalMap;
-            //    SaveTextureToFile();
-            //    Debug.Log(nowFilled.ToString());
-            //    Application.Quit();
-            //}
-            //else
-            //{
-            //    Debug.Log(nowFilled.ToString() + " / " + (textureWidth * textureHeight * completeThreshold).ToString());
-            //}
-
-            Debug.Log(nowFilled.ToString() + " / " + (textureWidth * textureHeight * completeThreshold).ToString());
-
-
-            // Log how filled?
-
-            //for (int i = 0; i < 1024; i++)
-            //{
-            //    for (int j = 0; j < 1024; j++)
-            //    {
-            //        if (istexturefilled[i, j] == true)
-            //        {
-            //            nowFilled++;
-            //        }
-            //    }
-            //}
-            // Debug.Log(nowFilled);
-            // log_isfilled.Add(nowFilled);
-
-            //if (updateNumber % 3 == 0 && LogSaveScreenshots)
-            //{
-            //    SaveScreenshot();
-            //    SaveTextureToFile();
-
-            //}
-
-        }
-
-
-        normalMaterial.mainTexture = normalMap;
-        SaveTextureToFile();
-        Debug.Log(nowFilled.ToString());
-        Application.Quit();
 
 
     }
@@ -940,6 +1056,61 @@ public class recordScript : MonoBehaviour
             Debug.Log($"Saved to {dirPath + "Image_" + now + "_normal.png"}");
         }
     }
+
+    public void saveLog()
+    {
+        string directoryName = loadFilename.Substring(0, loadFilename.Length - 4);
+        var dirPath = Application.dataPath + "/SaveStream/" + directoryName + "/";
+
+        using (System.IO.StreamWriter file = new System.IO.StreamWriter(dirPath + "Log_" + now + ".csv"))
+
+        {
+            file.WriteLine("filled");
+
+            foreach (int i in log_isfilled)
+            {
+                file.WriteLine(i.ToString());
+            }
+
+        }
+    }
+
+    
+    Texture2D[] loadMasks(string filepath)
+    {
+
+        Texture2D mask = null;
+        byte[] fileData;
+
+        if (System.IO.File.Exists(Application.dataPath + "/" + filepath + "/mask_all.png"))
+        {
+            fileData = System.IO.File.ReadAllBytes(Application.dataPath + "/" + filepath + "/mask_all.png");
+            mask_all = new Texture2D(textureWidth, textureHeight);
+            mask_all.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+        }
+        else
+        {
+            Debug.Log("There's no mask_all.png");
+        }
+
+        if (System.IO.File.Exists(Application.dataPath + "/" + filepath + "/mask_except.png"))
+        { 
+            fileData = System.IO.File.ReadAllBytes(Application.dataPath + "/" + filepath + "/mask_except.png");
+            mask_except = new Texture2D(textureWidth, textureHeight);
+            mask_except.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+        }
+        else
+        {
+            
+            Debug.Log("There's no mask_except.png");
+            
+        }
+
+        Texture2D[] loaded_mask = new Texture2D[] { mask_all, mask_except };
+
+        return loaded_mask;
+    }
+
 
     void OnApplicationQuit()
     {
