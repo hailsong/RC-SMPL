@@ -337,6 +337,9 @@ public class recordScript : MonoBehaviour
     static int kinectHeight = 576;
 
     public bool rayCasting = false;
+
+    public bool useBaseTexture;
+
     int brushCounter = 0, MAX_BRUSH_COUNT = 368640; //To avoid having millions of brushes
     bool saving = false; //Flag to check if we are saving the texture
     List<int> log_isfilled = new List<int>() { 0 };
@@ -385,6 +388,7 @@ public class recordScript : MonoBehaviour
 
     Texture2D mask_all;
     Texture2D mask_except;
+    Texture2D base_texture;
 
     void Start()
     {
@@ -442,6 +446,10 @@ public class recordScript : MonoBehaviour
         Debug.Log(myLoadData.indicesSave);
 
         tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
+        if (useBaseTexture)
+        {
+            tex = base_texture;
+        }
         normalMap = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
 
         index_load = startFrameOffset;
@@ -1106,7 +1114,20 @@ public class recordScript : MonoBehaviour
             
         }
 
-        Texture2D[] loaded_mask = new Texture2D[] { mask_all, mask_except };
+        if (System.IO.File.Exists(Application.dataPath + "/" + filepath + "/base_texture.png"))
+        {
+            fileData = System.IO.File.ReadAllBytes(Application.dataPath + "/" + filepath + "/base_texture.png");
+            base_texture = new Texture2D(textureWidth, textureHeight);
+            base_texture.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+        }
+        else
+        {
+
+            Debug.Log("There's no mask_except.png");
+
+        }
+
+        Texture2D[] loaded_mask = new Texture2D[] { mask_all, mask_except, base_texture };
 
         return loaded_mask;
     }

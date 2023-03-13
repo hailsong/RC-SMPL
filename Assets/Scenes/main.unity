@@ -440,7 +440,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_tracker: {fileID: 566169799}
-  InitManager: {fileID: 0}
+  InitManager: {fileID: 2040114918}
   SMPLXObject: {fileID: 865242790}
   avatarOrigin: {fileID: 0}
   filterThreshold: 1.26
@@ -448,9 +448,9 @@ MonoBehaviour:
   CameraOrigin: {fileID: 720754042}
   sceneCamera: {fileID: 720754041}
   canvasCam: {fileID: 720754041}
-  distanceThreshold: 0.2
-  angleTreshold: 30
-  completeThreshold: 0.2
+  distanceThreshold: 0.15
+  angleTreshold: 15
+  completeThreshold: 0.35
   brushColor: {r: 1, g: 0, b: 0, a: 1}
   rayTarget: {fileID: 0}
   brushContainer: {fileID: 1512370505}
@@ -460,9 +460,9 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: 0c148d37b839c3e4d84057e2d000b7ce, type: 2}
   normalMaterial: {fileID: 2100000, guid: 6413374c8f46ef24ea03193113dc4cfd, type: 2}
   brushWindowSize: 3
-  UpdatePeriod: 1.5
+  UpdatePeriod: 1
   useNormalmap: 1
-  useDebug: 0
+  useDebug: 1
   poseConfidenceThreshold: 0.4
   confidenceDebug: {fileID: 1900016052}
   debugSaveTex: {fileID: 1777815530}
@@ -472,7 +472,9 @@ MonoBehaviour:
   progressBar: {fileID: 1377605217}
   progressBarContainer: {fileID: 1138911677}
   LogSaveScreenshots: 0
+  maskDirectory: Masks
   rayCasting: 0
+  useBaseTexture: 0
   updateNumber: 0
 --- !u!4 &300952144
 Transform:

@@ -79,6 +79,10 @@ public class main : MonoBehaviour
 
     System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
+    Texture2D mask_all;
+    Texture2D mask_except;
+    Texture2D base_texture;
+    public string maskDirectory;
 
 
     bool saving = false; //Flag to check if we are saving the texture
@@ -98,6 +102,9 @@ public class main : MonoBehaviour
 
     public bool rayCasting = false;
     List<int> log_isfilled = new List<int>() { 0 };
+
+
+    public bool useBaseTexture;
 
     //pt 수
     int num = kinectWidth * kinectHeight;
@@ -164,6 +171,10 @@ public class main : MonoBehaviour
         
 
         setShapeParms(betas);
+
+
+        loadMasks(maskDirectory);
+        Debug.Log($"Mask Dimension, {mask_all.dimension}");
 
 
 
@@ -242,6 +253,54 @@ public class main : MonoBehaviour
         //}
     }
 
+    Texture2D[] loadMasks(string filepath)
+    {
+
+        Texture2D mask = null;
+        byte[] fileData;
+
+        if (System.IO.File.Exists(Application.dataPath + "/" + filepath + "/mask_all.png"))
+        {
+            fileData = System.IO.File.ReadAllBytes(Application.dataPath + "/" + filepath + "/mask_all.png");
+            mask_all = new Texture2D(textureWidth, textureHeight);
+            mask_all.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+        }
+        else
+        {
+            Debug.Log("There's no mask_all.png");
+        }
+
+        if (System.IO.File.Exists(Application.dataPath + "/" + filepath + "/mask_except.png"))
+        {
+            fileData = System.IO.File.ReadAllBytes(Application.dataPath + "/" + filepath + "/mask_except.png");
+            mask_except = new Texture2D(textureWidth, textureHeight);
+            mask_except.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+        }
+        else
+        {
+
+            Debug.Log("There's no mask_except.png");
+
+        }
+
+        if (System.IO.File.Exists(Application.dataPath + "/" + filepath + "/base_texture.png"))
+        {
+            fileData = System.IO.File.ReadAllBytes(Application.dataPath + "/" + filepath + "/base_texture.png");
+            base_texture = new Texture2D(textureWidth, textureHeight);
+            base_texture.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+        }
+        else
+        {
+
+            Debug.Log("There's no mask_except.png");
+
+        }
+
+        Texture2D[] loaded_mask = new Texture2D[] { mask_all, mask_except, base_texture };
+
+        return loaded_mask;
+    }
+
     void OnApplicationQuit()
     {
         if (m_skeletalTrackingProvider != null)
@@ -269,6 +328,10 @@ public class main : MonoBehaviour
     {
         Texture2D tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
         Texture2D normalMap = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
+        if (useBaseTexture)
+        {
+            tex = base_texture;
+        }
         // tex.LoadImage(InitManager.GetComponent<TextureLoader>().initTexture.GetRawTextureData());
 
         while (true)
@@ -300,7 +363,10 @@ public class main : MonoBehaviour
                         int x_coord = (int)(uvWorldPosition.x * textureWidth);
                         int y_coord = (int)(uvWorldPosition.y * textureHeight);
 
-                        // Debug.Log($"{x_coord}, {y_coord}");
+                        if (mask_except.GetPixel(x_coord, y_coord) == Color.white)
+                        {
+                            continue;
+                        }
 
                         if (true)
                         {
@@ -531,6 +597,12 @@ public class main : MonoBehaviour
         {
             for (int j = 0; j < textureHeight; j++)
             {
+
+                if (mask_except.GetPixel(i, j) == Color.white || mask_all.GetPixel(i, j) == Color.black)
+                {
+                    continue;
+                }
+
                 if (!(istexturefilled[i, j])) // && (i + j)%10 == 0)
                 {
                     int squareSize = 1;

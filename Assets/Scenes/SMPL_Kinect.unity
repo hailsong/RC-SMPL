@@ -317,7 +317,6 @@ GameObject:
   - component: {fileID: 300952144}
   - component: {fileID: 300952146}
   - component: {fileID: 300952147}
-  - component: {fileID: 300952143}
   - component: {fileID: 300952148}
   - component: {fileID: 300952145}
   m_Layer: 0
@@ -327,45 +326,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &300952143
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 300952142}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71abc990c46f07c40ac230c12aa9636d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_tracker: {fileID: 566169799}
-  avatarOrigin: {fileID: 17779095}
-  filterThreshold: 1.26
-  ViewPointCloud: 0
-  CameraOrigin: {fileID: 720754042}
-  sceneCamera: {fileID: 720754041}
-  canvasCam: {fileID: 720754041}
-  distanceThreshold: 0.2
-  brushColor: {r: 1, g: 0, b: 0, a: 1}
-  rayTarget: {fileID: 0}
-  brushContainer: {fileID: 1512370505}
-  cursorPaint: {fileID: 21300000, guid: 2ad8e55b008da9a4f9203826e67bc99c, type: 3}
-  cursorDecal: {fileID: 21300000, guid: b1fa017c585432546b6ec1de5ca8094f, type: 3}
-  canvasTexture: {fileID: 8400000, guid: 5ccf150f8e559434d90f8855d0ff70fd, type: 2}
-  baseMaterial: {fileID: 2100000, guid: 0c148d37b839c3e4d84057e2d000b7ce, type: 2}
-  brushWindowSize: 5
-  UseThread: 1
-  UpdatePeriod: 1.5
-  debugRaycast: {fileID: 1900016052}
-  debugSaveTex: {fileID: 1777815530}
-  TextureDebug: {fileID: 0}
-  ImageInput: {fileID: 0}
-  LogSaveScreenshots: 0
-  textureWidth: 1024
-  textureHeight: 1024
-  rayCasting: 0
-  updateNumber: 0
 --- !u!4 &300952144
 Transform:
   m_ObjectHideFlags: 0
