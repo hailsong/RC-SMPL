@@ -59,6 +59,12 @@ public class main : MonoBehaviour
     float poseConfidence = 0;
     public float poseConfidenceThreshold;
 
+    [SerializeField]
+    public int startFrameOffset;
+    public int endFrameOffset;
+    public int startIndexOffset;
+    public int endIndexOffset;
+
     [Header("Log UI")]
     [SerializeField]
     public GameObject confidenceDebug;
@@ -345,7 +351,7 @@ public class main : MonoBehaviour
 
 
 
-            for (int index = 0; index < num; index = index + 1)
+            for (int index = startIndexOffset; index < num - endIndexOffset; index = index + 1)
             {
                 Vector3 vertex = vertices[index];
 

@@ -463,101 +463,7 @@ public class recordScript : MonoBehaviour
 
     void FixedUpdate()
     {
-        time += Time.deltaTime;
         
-        if (ViewPointCloud)
-        {
-            mesh.vertices = vertices;
-            mesh.colors32 = colors;
-            mesh.RecalculateBounds();
-        }
-
-        if (m_skeletalTrackingProvider.IsRunning)
-        {
-            if (m_skeletalTrackingProvider.GetCurrentFrameData(ref m_lastFrameData))
-            {
-                if (m_lastFrameData.NumOfBodies != 0)
-                {
-                    if (!nowLoading)
-                    {
-                        m_tracker.GetComponent<TrackerHandler>().updateTracker(m_lastFrameData);
-                    }
-
-                    body = m_tracker.GetComponent<TrackerHandler>().getBodyData(m_lastFrameData);
-                    vertices = m_tracker.GetComponent<TrackerHandler>().getVerticesData(m_lastFrameData);
-                    colors = m_tracker.GetComponent<TrackerHandler>().getColorsData(m_lastFrameData);
-                    indices = m_tracker.GetComponent<TrackerHandler>().getIndicesData(m_lastFrameData);
-
-                    // Debug.Log($"{body.Length}, {vertices.Length}, {colors.Length}, {indices.Length}");
-
-                    for (int i = 0; i < m_lastFrameData.Bodies[0].JointPrecisions.Length; i++)
-                    {
-                        poseConfidence += (int)m_lastFrameData.Bodies[0].JointPrecisions[i];
-                    }
-                    poseConfidence /= m_lastFrameData.Bodies[0].JointPrecisions.Length;
-
-                    // print(poseConfidence);
-
-                    kinectColorTexture.SetPixels32(colors);
-                    kinectColorTexture.Apply();
-
-                    ImageInput.canvasRenderer.SetTexture(kinectColorTexture);
-
-
-
-
-
-                    if (nowRecording && savePeriod < time)
-                    {
-                        // verticesList.Add(vertices);
-                        SaveData.SerializableVector3Array serializableVector3Arr = new SaveData.SerializableVector3Array(vertices);
-                        SaveData.SerializableColor32 serializableColor = new SaveData.SerializableColor32(colors);
-                        SaveData.SerializableBody serializableBody = new SaveData.SerializableBody(body);
-                        bodyList.Add(serializableBody);
-                        verticesList.Add(serializableVector3Arr);
-                        colorList.Add(serializableColor);
-                        indicesList.Add(indices);
-                        
-                        Debug.Log($"{verticesList.Count}, {colorList.Count}, {indicesList.Count}, {bodyList.Count}");
-
-                        byte[] bytes = kinectColorTexture.EncodeToPNG();
-
-                        Texture2D MaskTexture2D = RTImage(maskCamera);
-                        byte[] bytes_mask = MaskTexture2D.EncodeToPNG();
-
-                        var dirPath = Application.dataPath + "/SaveStream/" + now + "/";
-                        if (!Directory.Exists(dirPath))
-                        {
-                            Directory.CreateDirectory(dirPath);
-                        }
-                        File.WriteAllBytes(dirPath + "InputImage_" + frameNum + ".png", bytes);
-                        File.WriteAllBytes(dirPath + "InputMask_" + frameNum + ".png", bytes_mask);
-
-                        
-
-
-                        time = 0f;
-                        frameNum += 1;
-
-                       
-                    }
-                }
-
-
-                
-
-                
-
-                if (verticesList.Count > 500)
-                {
-                    Application.Quit();
-                }
-
-                // Save {vertices, colors, indices, 
-            }
-
-
-        }
 
     }
 
@@ -801,6 +707,105 @@ public class recordScript : MonoBehaviour
                 nowLoading = false;
             }
 
+        }
+    
+        if (nowRecording)
+        {
+            time += Time.deltaTime;
+
+            if (ViewPointCloud)
+            {
+                mesh.vertices = vertices;
+                mesh.colors32 = colors;
+                mesh.RecalculateBounds();
+            }
+
+            if (m_skeletalTrackingProvider.IsRunning)
+            {
+                if (m_skeletalTrackingProvider.GetCurrentFrameData(ref m_lastFrameData))
+                {
+                    if (m_lastFrameData.NumOfBodies != 0)
+                    {
+                        if (!nowLoading)
+                        {
+                            m_tracker.GetComponent<TrackerHandler>().updateTracker(m_lastFrameData);
+                        }
+
+                        body = m_tracker.GetComponent<TrackerHandler>().getBodyData(m_lastFrameData);
+                        vertices = m_tracker.GetComponent<TrackerHandler>().getVerticesData(m_lastFrameData);
+                        colors = m_tracker.GetComponent<TrackerHandler>().getColorsData(m_lastFrameData);
+                        indices = m_tracker.GetComponent<TrackerHandler>().getIndicesData(m_lastFrameData);
+
+                        // Debug.Log($"{body.Length}, {vertices.Length}, {colors.Length}, {indices.Length}");
+
+                        for (int i = 0; i < m_lastFrameData.Bodies[0].JointPrecisions.Length; i++)
+                        {
+                            poseConfidence += (int)m_lastFrameData.Bodies[0].JointPrecisions[i];
+                        }
+                        poseConfidence /= m_lastFrameData.Bodies[0].JointPrecisions.Length;
+
+                        // print(poseConfidence);
+
+                        kinectColorTexture.SetPixels32(colors);
+                        kinectColorTexture.Apply();
+
+                        ImageInput.canvasRenderer.SetTexture(kinectColorTexture);
+
+
+
+
+
+                        if (nowRecording && savePeriod < time)
+                        {
+                            // verticesList.Add(vertices);
+                            SaveData.SerializableVector3Array serializableVector3Arr = new SaveData.SerializableVector3Array(vertices);
+                            SaveData.SerializableColor32 serializableColor = new SaveData.SerializableColor32(colors);
+                            SaveData.SerializableBody serializableBody = new SaveData.SerializableBody(body);
+                            bodyList.Add(serializableBody);
+                            verticesList.Add(serializableVector3Arr);
+                            colorList.Add(serializableColor);
+                            indicesList.Add(indices);
+
+                            Debug.Log($"{verticesList.Count}, {colorList.Count}, {indicesList.Count}, {bodyList.Count}");
+
+                            byte[] bytes = kinectColorTexture.EncodeToPNG();
+
+                            Texture2D MaskTexture2D = RTImage(maskCamera);
+                            byte[] bytes_mask = MaskTexture2D.EncodeToPNG();
+
+                            var dirPath = Application.dataPath + "/SaveStream/" + now + "/";
+                            if (!Directory.Exists(dirPath))
+                            {
+                                Directory.CreateDirectory(dirPath);
+                            }
+                            File.WriteAllBytes(dirPath + "InputImage_" + frameNum + ".png", bytes);
+                            File.WriteAllBytes(dirPath + "InputMask_" + frameNum + ".png", bytes_mask);
+
+
+
+
+                            time = 0f;
+                            frameNum += 1;
+
+
+                        }
+                    }
+
+
+
+
+
+
+                    if (verticesList.Count > 500)
+                    {
+                        Application.Quit();
+                    }
+
+                    // Save {vertices, colors, indices, 
+                }
+
+
+            }
         }
     }
 

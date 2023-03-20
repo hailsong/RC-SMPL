@@ -426,7 +426,7 @@ MonoBehaviour:
   SMPL_Avatar: {fileID: 104213661}
   CollisionHelper: {fileID: 104213663}
   savePeriod: 1
-  loadFilename: 20230313123529_SaveStream.dat
+  loadFilename: 20230315142330_SaveStream.dat
   avatarOrigin: {fileID: 0}
   filterThreshold: 1.26
   ViewPointCloud: 0
@@ -459,6 +459,7 @@ MonoBehaviour:
   maskCamera: {fileID: 2098754631}
   virtualCamera: {fileID: 720754041}
   rayCasting: 0
+  useBaseTexture: 0
   updateNumber: 0
 --- !u!4 &300952144
 Transform:
