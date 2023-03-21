@@ -266,6 +266,9 @@ public class recordScript : MonoBehaviour
     public SkinnedCollisionHelper CollisionHelper;
     public BackgroundData m_lastFrameData = new BackgroundData();
     Transformation transformation;
+    public GameObject InitManager;
+    public GameObject SMPLXObject;
+    public GameObject SMPLXMask;
 
     Texture2D kinectColorTexture;
     private float time = -5f;
@@ -431,6 +434,9 @@ public class recordScript : MonoBehaviour
 
         watch.Start();
 
+        float[] betas = InitManager.GetComponent<InitScriptRecord>().readShapeParms();
+
+        setShapeParms(betas);
 
 
 
@@ -1088,7 +1094,21 @@ public class recordScript : MonoBehaviour
         }
     }
 
-    
+
+    void setShapeParms(float[] betas)
+    {
+        SMPLXObject.GetComponent<SMPLX>().betas = betas;
+        SMPLXObject.GetComponent<SMPLX>().SetBetaShapes();
+
+        SMPLXMask.GetComponent<SMPLX>().betas = betas;
+        SMPLXMask.GetComponent<SMPLX>().SetBetaShapes();
+
+        //for (int i = 0; i < 10; i++)
+        //{
+        //    Debug.Log(betas[i]);
+        //}
+    }
+
     Texture2D[] loadMasks(string filepath)
     {
 

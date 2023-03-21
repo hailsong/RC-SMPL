@@ -28,7 +28,7 @@ public class main : MonoBehaviour
 
     [Header("Pointcloud Filter")]
     [SerializeField]
-    Transform avatarOrigin;
+    public Transform avatarOrigin;
     [Range(0.0f, 3.0f)]
     public float filterThreshold;
     public bool ViewPointCloud = false;
@@ -173,7 +173,7 @@ public class main : MonoBehaviour
 
         watch.Start();
 
-        float[] betas = InitManager.GetComponent<JsonScript>().readShapeParms();
+        float[] betas = InitManager.GetComponent<InitScriptRecord>().readShapeParms();
         
 
         setShapeParms(betas);
@@ -251,12 +251,16 @@ public class main : MonoBehaviour
     void setShapeParms(float[] betas)
     {
         SMPLXObject.GetComponent<SMPLX>().betas = betas;
-        SMPLXObject.GetComponent<SMPLX>().SetBetaShapes();
 
         //for (int i = 0; i < 10; i++)
         //{
-        //    Debug.Log(betas[i]);
+        //    SMPLXObject.GetComponent<SMPLX>()._numBetaShapes++;
+            // Debug.Log(betas[i]);
         //}
+
+        SMPLXObject.GetComponent<SMPLX>().SetBetaShapes();
+
+
     }
 
     Texture2D[] loadMasks(string filepath)
