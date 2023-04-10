@@ -10,9 +10,6 @@ using System.Linq;
 
 
 
-
-
-
 public class main : MonoBehaviour
 {
     // Handler for SkeletalTracking thread.
@@ -24,7 +21,6 @@ public class main : MonoBehaviour
     public GameObject SMPLXObject;
 
     Texture2D kinectColorTexture;
-
 
     [Header("Pointcloud Filter")]
     [SerializeField]
@@ -44,7 +40,18 @@ public class main : MonoBehaviour
     [SerializeField]
     float completeThreshold;
     [SerializeField]
-    Color brushColor = Color.red;
+    const float defaultBlendRate = 1f;
+
+    float angleWeight;
+
+    [SerializeField]
+    public bool useChromaKey;
+    public Color32 chromaKeyColor;
+    public float ChromaKeyThreshold;
+
+    [SerializeField]
+    public UnityEngine.UI.RawImage chromaUI;
+
     public Transform rayTarget;
     public GameObject brushContainer;
     public Sprite cursorPaint, cursorDecal; // Cursor for the differen functions 
@@ -129,6 +136,16 @@ public class main : MonoBehaviour
 
     public int updateNumber = 0;
     //public Texture2D tex = new Texture2D(1024, 1024, TextureFormat.RGB24, false);
+
+    private void Awake()
+    {
+        //Texture2D chromaTexture = new Texture2D(5, 5, TextureFormat.RGB24, false);
+        //Color[] colors = Enumerable.Repeat<Color>(chromaKeyColor, 5* 5).ToArray<Color>();
+        //chromaTexture.SetPixels(0, 0, 5, 5, colors);
+
+        //chromaUI.canvasRenderer.SetTexture(chromaTexture);
+        chromaUI.color = chromaKeyColor;
+    }
 
 
     void Start()
@@ -377,6 +394,10 @@ public class main : MonoBehaviour
                         {
                             continue;
                         }
+                        if (useChromaKey && IsChromaKeyPixel(color))
+                        {
+                            continue;
+                        }
 
                         if (true)
                         {
@@ -393,30 +414,49 @@ public class main : MonoBehaviour
                                     Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
                                     Vector2 pointRelativePosition = new Vector2(i, j);
                                     float distanceFromCenter = pointRelativePosition.magnitude;
-                                    // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
+
+                                    angleWeight = Mathf.Cos(hitAngle * Mathf.Deg2Rad);
+
                                     if (i == 0 && j == 0)
                                     {
-                                        tex.SetPixel(x_coord + i, y_coord + j, color);
+                                        Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                        tex.SetPixel(x_coord + i, y_coord + j, color_blend);
                                     }
                                     else if (istexturefilled[x_coord + i, y_coord + j] == true)
                                     {
-                                        Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                                        Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                        Color32 brushColor = Color32.Lerp(color_origin, color_blend, distanceFromCenter / brushWindowSize);
                                         tex.SetPixel(x_coord + i, y_coord + j, brushColor);
                                     }
                                     else
                                     {
                                         tex.SetPixel(x_coord + i, y_coord + j, color);
                                     }
-                                    
+
+                                    // NoNormalBlending
+                                    //if (i == 0 && j == 0)
+                                    //{
+                                    //    tex.SetPixel(x_coord + i, y_coord + j, color);
+                                    //}
+                                    //else if (istexturefilled[x_coord + i, y_coord + j] == true)
+                                    //{
+                                    //    Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                                    //    tex.SetPixel(x_coord + i, y_coord + j, brushColor);
+                                    //}
+                                    //else
+                                    //{
+                                    //    tex.SetPixel(x_coord + i, y_coord + j, color);
+                                    //}
+
 
                                     //if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
                                     //    istexturefilled[x_coord + i, y_coord + j] = true;
 
-                                    //if (index % 1000 == 0)
-                                    //{
-                                    //    // Debug.Log($"{brushColor}, {color}, {color_origin}, {distanceFromCenter / brushWindowSize}, {distanceFromCenter}, {i}{j}");
-                                    //    Debug.Log(hitAngle);
-                                    //}
+                                    if (index % 1000 == 0)
+                                    {
+                                        // Debug.Log($"{brushColor}, {color}, {color_origin}, {distanceFromCenter / brushWindowSize}, {distanceFromCenter}, {i}{j}");
+                                        Debug.Log(hitAngle);
+                                    }
 
                                 }
                             }
@@ -504,12 +544,14 @@ public class main : MonoBehaviour
             // Debug.Log(nowFilled);
             // log_isfilled.Add(nowFilled);
 
-            //if (updateNumber % 3 == 0 && LogSaveScreenshots)
-            //{
-            //    SaveScreenshot();
-            //    SaveTextureToFile();
 
-            //}
+            if (updateNumber % 1 == 0 && LogSaveScreenshots)
+            {
+                SaveScreenshot(tex, 0);
+                SaveScreenshot(normalMap, 1);
+                // SaveTextureToFile();
+
+            }
 
 
 
@@ -598,6 +640,20 @@ public class main : MonoBehaviour
 
         Color normalMapColor = new Color(normal.x / 2 + 0.5f, normal.y / 2 + 0.5f, normal.z / 2 + 0.5f, 1f);
         return normalMapColor;
+    }
+
+    public bool IsChromaKeyPixel(Color32 pixelColor)
+    {
+        float colorDifference = ColorDifference(pixelColor, chromaKeyColor);
+        return colorDifference <= ChromaKeyThreshold;
+    }
+
+    private float ColorDifference(Color32 a, Color32 b)
+    {
+        float rDiff = Mathf.Abs(a.r - b.r) / 255f;
+        float gDiff = Mathf.Abs(a.g - b.g) / 255f;
+        float bDiff = Mathf.Abs(a.b - b.b) / 255f;
+        return (rDiff + gDiff + bDiff) / 3f;
     }
 
     Texture2D postProcessing(Texture2D inputTexture)
@@ -740,19 +796,16 @@ public class main : MonoBehaviour
         }
     }
 
-    public void SaveScreenshot()
+    public void SaveScreenshot(Texture2D input, int index)
     {
-        Texture2D screenTex = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
-        Rect area = new Rect(0f, 0f, Screen.width, Screen.height);
-        screenTex.ReadPixels(area, 0, 0);
         string now = System.DateTime.Now.ToString("yyyyMMddHHmmss");
         var dirPath = Application.dataPath + "/../Screenshots/";
         if (!Directory.Exists(dirPath))
         {
             Directory.CreateDirectory(dirPath);
         }
-        File.WriteAllBytes(dirPath + "Screenshot_" + now + ".png", screenTex.EncodeToPNG());
-        Debug.Log($"Saved to {dirPath + "Screenshot_" + now + ".png"}");
+        File.WriteAllBytes(dirPath + "Screenshot_" + now + index.ToString() + ".png", input.EncodeToPNG());
+        Debug.Log($"Saved to {dirPath + "Screenshot_" + now + index.ToString() + ".png"}");
 
     }
 
@@ -763,4 +816,99 @@ public class main : MonoBehaviour
         // Debug.Log(LogSaveScreenshots);
     }
 
+}
+
+
+public struct ColorFloatQueue
+{
+    private readonly int _fixedSize;
+    private int _colorIndex, _floatIndex;
+    public Color[] ColorArray { get; set; }
+    public float[] FloatArray { get; set; }
+
+    public ColorFloatQueue(int fixedSize)
+    {
+        _fixedSize = fixedSize;
+        ColorArray = new Color[fixedSize];
+        FloatArray = new float[fixedSize];
+        _colorIndex = 0;
+        _floatIndex = 0;
+    }
+
+    public void AddColor(Color colorValue)
+    {
+        ColorArray[_colorIndex] = colorValue;
+        _colorIndex = (_colorIndex + 1) % _fixedSize;
+    }
+
+    public void AddFloat(float value)
+    {
+        FloatArray[_floatIndex] = value;
+        _floatIndex = (_floatIndex + 1) % _fixedSize;
+    }
+
+    public float GetFloatAverage()
+    {
+        return FloatArray.Average();
+    }
+
+    public Color GetAverageColor()
+    {
+        float rSum = 0;
+        float gSum = 0;
+        float bSum = 0;
+        int count = 0;
+
+        foreach (Color color in ColorArray)
+        {
+            if (color != Color.black)
+            {
+                rSum += color.r;
+                gSum += color.g;
+                bSum += color.b;
+                count++;
+            }
+        }
+
+        if (count == 0)
+        {
+            return Color.black;
+        }
+
+        float rAverage = rSum / count;
+        float gAverage = gSum / count;
+        float bAverage = bSum / count;
+
+        return new Color(rAverage, gAverage, bAverage);
+    }
+
+    public Color GetWeightedColor()
+    {
+        float rSum = 0;
+        float gSum = 0;
+        float bSum = 0;
+        int count = 0;
+
+        foreach (Color color in ColorArray)
+        {
+            if (color != Color.black)
+            {
+                rSum += color.r * FloatArray[count];
+                gSum += color.g * FloatArray[count];
+                bSum += color.b * FloatArray[count];
+                count++;
+            }
+        }
+
+        if (count == 0)
+        {
+            return Color.black;
+        }
+
+        float rResult = rSum / FloatArray.Average();
+        float gResult = gSum / FloatArray.Average();
+        float bResult = bSum / FloatArray.Average();
+
+        return new Color(rResult, gResult, bResult);
+    }
 }

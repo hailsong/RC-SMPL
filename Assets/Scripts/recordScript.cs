@@ -294,7 +294,18 @@ public class recordScript : MonoBehaviour
     [SerializeField]
     float completeThreshold;
     [SerializeField]
-    Color brushColor = Color.red;
+    const float defaultBlendRate = 1f;
+
+    float angleWeight;
+
+    [SerializeField]
+    public bool useChromaKey;
+    public Color32 chromaKeyColor = new Color32(0, 255, 0, 255);
+    public float ChromaKeyThreshold;
+
+    [SerializeField]
+    public UnityEngine.UI.RawImage chromaUI;
+
     public Transform rayTarget;
     public GameObject brushContainer;
     public Sprite cursorPaint, cursorDecal; // Cursor for the differen functions 
@@ -330,7 +341,8 @@ public class recordScript : MonoBehaviour
 
     public Camera maskCamera;
     public Camera virtualCamera;
-    
+    public Camera virtualCamera_dummy;
+
 
     System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
@@ -392,6 +404,11 @@ public class recordScript : MonoBehaviour
     Texture2D mask_all;
     Texture2D mask_except;
     Texture2D base_texture;
+
+    private void Awake()
+    {
+        chromaUI.color = chromaKeyColor;
+    }
 
     void Start()
     {
@@ -530,6 +547,10 @@ public class recordScript : MonoBehaviour
                         {
                             continue;
                         }
+                        if (useChromaKey && IsChromaKeyPixel(color))
+                        {
+                            continue;
+                        }
 
 
                         if (true)
@@ -547,20 +568,39 @@ public class recordScript : MonoBehaviour
                                     Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
                                     Vector2 pointRelativePosition = new Vector2(i, j);
                                     float distanceFromCenter = pointRelativePosition.magnitude;
-                                    // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
+
+                                    angleWeight = Mathf.Sqrt(Mathf.Cos(hitAngle * Mathf.Deg2Rad));
+
                                     if (i == 0 && j == 0)
                                     {
-                                        tex.SetPixel(x_coord + i, y_coord + j, color);
+                                        Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                        tex.SetPixel(x_coord + i, y_coord + j, color_blend);
                                     }
                                     else if (istexturefilled[x_coord + i, y_coord + j] == true)
                                     {
-                                        Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                                        Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                        Color32 brushColor = Color32.Lerp(color_origin, color_blend, distanceFromCenter / brushWindowSize);
                                         tex.SetPixel(x_coord + i, y_coord + j, brushColor);
                                     }
                                     else
                                     {
                                         tex.SetPixel(x_coord + i, y_coord + j, color);
                                     }
+
+                                    // NoNormalBlending
+                                    //if (i == 0 && j == 0)
+                                    //{
+                                    //    tex.SetPixel(x_coord + i, y_coord + j, color);
+                                    //}
+                                    //else if (istexturefilled[x_coord + i, y_coord + j] == true)
+                                    //{
+                                    //    Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                                    //    tex.SetPixel(x_coord + i, y_coord + j, brushColor);
+                                    //}
+                                    //else
+                                    //{
+                                    //    tex.SetPixel(x_coord + i, y_coord + j, color);
+                                    //}
 
 
                                     //if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
@@ -676,6 +716,21 @@ public class recordScript : MonoBehaviour
 
 
 
+            //Texture2D VirtualTexture2D_dummy = RTImage(virtualCamera_dummy);
+            //byte[] bytes_render_dummy = VirtualTexture2D_dummy.EncodeToPNG();
+
+            //string directoryName_dummy = loadFilename.Substring(0, loadFilename.Length - 4);
+            //var dirPath_dummy = Application.dataPath + "/SaveStream/" + directoryName_dummy + "/";
+            //if (!Directory.Exists(dirPath))
+            //{
+            //    Directory.CreateDirectory(dirPath_dummy);
+            //}
+
+
+            //File.WriteAllBytes(dirPath + "Image_" + index_load + "_render_pointclouds.png", bytes_render_dummy);
+
+
+
             // Log how filled?
 
             //for (int i = 0; i < 1024; i++)
@@ -708,10 +763,11 @@ public class recordScript : MonoBehaviour
                 normalMaterial.mainTexture = normalMap;
                 SaveTextureToFile();
                 saveLog();
-                Debug.Log(nowFilled.ToString());
+                // Debug.Log(nowFilled.ToString());
                 Application.Quit();
                 nowLoading = false;
             }
+
 
         }
     
@@ -946,6 +1002,20 @@ public class recordScript : MonoBehaviour
 
         Color normalMapColor = new Color(normal.x / 2 + 0.5f, normal.y / 2 + 0.5f, normal.z / 2 + 0.5f, 1f);
         return normalMapColor;
+    }
+
+    public bool IsChromaKeyPixel(Color32 pixelColor)
+    {
+        float colorDifference = ColorDifference(pixelColor, chromaKeyColor);
+        return colorDifference <= ChromaKeyThreshold;
+    }
+
+    private float ColorDifference(Color32 a, Color32 b)
+    {
+        float rDiff = Mathf.Abs(a.r - b.r) / 255f;
+        float gDiff = Mathf.Abs(a.g - b.g) / 255f;
+        float bDiff = Mathf.Abs(a.b - b.b) / 255f;
+        return (rDiff + gDiff + bDiff) / 3f;
     }
 
     Texture2D postProcessing(Texture2D inputTexture)

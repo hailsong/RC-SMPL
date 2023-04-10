@@ -444,14 +444,19 @@ MonoBehaviour:
   SMPLXObject: {fileID: 1824464286}
   avatarOrigin: {fileID: 1824464290}
   filterThreshold: 1.26
-  ViewPointCloud: 1
+  ViewPointCloud: 0
   CameraOrigin: {fileID: 720754042}
   sceneCamera: {fileID: 720754041}
   canvasCam: {fileID: 720754041}
-  distanceThreshold: 0.15
-  angleTreshold: 15
+  distanceThreshold: 0.5
+  angleTreshold: 30
   completeThreshold: 0.35
-  brushColor: {r: 1, g: 0, b: 0, a: 1}
+  useChromaKey: 1
+  chromaKeyColor:
+    serializedVersion: 2
+    rgba: 4278255360
+  ChromaKeyThreshold: 0.3
+  chromaUI: {fileID: 1414418361}
   rayTarget: {fileID: 0}
   brushContainer: {fileID: 1512370505}
   cursorPaint: {fileID: 21300000, guid: 2ad8e55b008da9a4f9203826e67bc99c, type: 3}
@@ -459,10 +464,10 @@ MonoBehaviour:
   canvasTexture: {fileID: 8400000, guid: 5ccf150f8e559434d90f8855d0ff70fd, type: 2}
   baseMaterial: {fileID: 2100000, guid: 0c148d37b839c3e4d84057e2d000b7ce, type: 2}
   normalMaterial: {fileID: 2100000, guid: 6413374c8f46ef24ea03193113dc4cfd, type: 2}
-  brushWindowSize: 3
+  brushWindowSize: 5
   UpdatePeriod: 1
   useNormalmap: 1
-  useDebug: 1
+  useDebug: 0
   poseConfidenceThreshold: 0.4
   startFrameOffset: 0
   endFrameOffset: 0
@@ -649,6 +654,7 @@ RectTransform:
   - {fileID: 1391605055}
   - {fileID: 1138911677}
   - {fileID: 1377605217}
+  - {fileID: 1414418360}
   m_Father: {fileID: 0}
   m_RootOrder: 15
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2144,6 +2150,77 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1391605054}
+  m_CullTransparentMesh: 0
+--- !u!1 &1414418359
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1414418360}
+  - component: {fileID: 1414418362}
+  - component: {fileID: 1414418361}
+  m_Layer: 5
+  m_Name: ChromaColor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1414418360
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414418359}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.52628, y: 0.52628, z: 0.52628}
+  m_Children: []
+  m_Father: {fileID: 327374739}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -50, y: -40}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1414418361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414418359}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Texture: {fileID: 0}
+  m_UVRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+--- !u!222 &1414418362
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414418359}
   m_CullTransparentMesh: 0
 --- !u!1 &1456357235
 GameObject:
