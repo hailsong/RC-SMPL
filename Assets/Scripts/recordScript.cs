@@ -653,14 +653,18 @@ public class recordScript : MonoBehaviour
                                         Color32 color_origin = normalMap.GetPixel(x_coord + i, y_coord + j);
                                         Vector2 pointRelativePosition = new Vector2(i, j);
                                         float distanceFromCenter = pointRelativePosition.magnitude;
-                                        // Color32 brushColor = Color.Lerp(color, color_origin, distanceFromCenter) ;
+
+                                        
+
                                         if (i == 0 && j == 0)
                                         {
-                                            normalMap.SetPixel(x_coord + i, y_coord + j, color);
+                                            Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                            normalMap.SetPixel(x_coord + i, y_coord + j, color_blend);
                                         }
                                         else if (istexturefilled[x_coord + i, y_coord + j] == true)
                                         {
-                                            Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                                            Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                            Color32 brushColor = Color32.Lerp(color_origin, color_blend, distanceFromCenter / brushWindowSize);
                                             normalMap.SetPixel(x_coord + i, y_coord + j, brushColor);
                                         }
                                         else

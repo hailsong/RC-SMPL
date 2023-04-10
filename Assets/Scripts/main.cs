@@ -139,11 +139,6 @@ public class main : MonoBehaviour
 
     private void Awake()
     {
-        //Texture2D chromaTexture = new Texture2D(5, 5, TextureFormat.RGB24, false);
-        //Color[] colors = Enumerable.Repeat<Color>(chromaKeyColor, 5* 5).ToArray<Color>();
-        //chromaTexture.SetPixels(0, 0, 5, 5, colors);
-
-        //chromaUI.canvasRenderer.SetTexture(chromaTexture);
         chromaUI.color = chromaKeyColor;
     }
 
