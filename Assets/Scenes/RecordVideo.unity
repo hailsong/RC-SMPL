@@ -298,7 +298,7 @@ MonoBehaviour:
   SMPLXObject: {fileID: 1843126641}
   SMPLXMask: {fileID: 2051795726}
   savePeriod: 1
-  loadFilename: 20230405155617_SaveStream.dat
+  loadFilename: 20230418162617_SaveStream.dat
   avatarOrigin: {fileID: 0}
   filterThreshold: 1.26
   ViewPointCloud: 1
@@ -311,8 +311,8 @@ MonoBehaviour:
   useChromaKey: 1
   chromaKeyColor:
     serializedVersion: 2
-    rgba: 4285370429
-  ChromaKeyThreshold: 0.1
+    rgba: 4284586240
+  ChromaKeyThreshold: 0.15
   chromaUI: {fileID: 1622825315}
   rayTarget: {fileID: 0}
   brushContainer: {fileID: 1512370505}
@@ -321,13 +321,13 @@ MonoBehaviour:
   canvasTexture: {fileID: 8400000, guid: 5ccf150f8e559434d90f8855d0ff70fd, type: 2}
   baseMaterial: {fileID: 2100000, guid: 0c148d37b839c3e4d84057e2d000b7ce, type: 2}
   normalMaterial: {fileID: 2100000, guid: 6413374c8f46ef24ea03193113dc4cfd, type: 2}
-  brushWindowSize: 5
+  brushWindowSize: 3
   UpdatePeriod: 0.5
   useNormalmap: 1
   useDebug: 1
   poseConfidenceThreshold: 0.4
   startFrameOffset: 1
-  endFrameOffset: 2
+  endFrameOffset: 4
   startIndexOffset: 0
   endIndexOffset: 30000
   maskDirectory: Masks

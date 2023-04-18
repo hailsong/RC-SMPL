@@ -448,7 +448,7 @@ MonoBehaviour:
   CameraOrigin: {fileID: 720754042}
   sceneCamera: {fileID: 720754041}
   canvasCam: {fileID: 720754041}
-  distanceThreshold: 0.5
+  distanceThreshold: 0.2
   angleTreshold: 30
   completeThreshold: 0.35
   useChromaKey: 1
@@ -464,9 +464,9 @@ MonoBehaviour:
   canvasTexture: {fileID: 8400000, guid: 5ccf150f8e559434d90f8855d0ff70fd, type: 2}
   baseMaterial: {fileID: 2100000, guid: 0c148d37b839c3e4d84057e2d000b7ce, type: 2}
   normalMaterial: {fileID: 2100000, guid: 6413374c8f46ef24ea03193113dc4cfd, type: 2}
-  brushWindowSize: 5
+  brushWindowSize: 3
   UpdatePeriod: 1
-  useNormalmap: 1
+  useNormalmap: 0
   useDebug: 0
   poseConfidenceThreshold: 0.4
   startFrameOffset: 0

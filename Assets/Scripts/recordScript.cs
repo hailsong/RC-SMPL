@@ -333,8 +333,8 @@ public class recordScript : MonoBehaviour
 
     int nowFilled = 0;
 
-    static int textureWidth = 1024;
-    static int textureHeight = 1024;
+    static int textureWidth = 512;
+    static int textureHeight = 512;
 
 
     public bool LogSaveScreenshots;
@@ -346,7 +346,7 @@ public class recordScript : MonoBehaviour
 
     System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
-    public bool[,] istexturefilled = new bool[1024, 1024];
+    public bool[,] istexturefilled = new bool[512, 512];
 
     static int kinectWidth = 640;
     static int kinectHeight = 576;
@@ -552,6 +552,7 @@ public class recordScript : MonoBehaviour
                             continue;
                         }
 
+                        angleWeight = Mathf.Sqrt(Mathf.Cos(hitAngle * Mathf.Deg2Rad));
 
                         if (true)
                         {
@@ -569,7 +570,7 @@ public class recordScript : MonoBehaviour
                                     Vector2 pointRelativePosition = new Vector2(i, j);
                                     float distanceFromCenter = pointRelativePosition.magnitude;
 
-                                    angleWeight = Mathf.Sqrt(Mathf.Cos(hitAngle * Mathf.Deg2Rad));
+                                    
 
                                     if (i == 0 && j == 0)
                                     {

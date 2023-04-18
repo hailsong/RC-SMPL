@@ -105,10 +105,10 @@ public class main : MonoBehaviour
 
     int nowFilled = 0;
 
-    static int textureWidth = 1024;
-    static int textureHeight = 1024;
+    static int textureWidth = 512;
+    static int textureHeight = 512;
 
-    public bool[,] istexturefilled = new bool[1024, 1024];
+    public bool[,] istexturefilled = new bool[512, 512];
 
     static int kinectWidth = 640;
     static int kinectHeight = 576;
@@ -365,139 +365,178 @@ public class main : MonoBehaviour
             //    tex = (Texture2D)baseMaterial.mainTexture;
             //}
 
-
-
-            for (int index = startIndexOffset; index < num - endIndexOffset; index = index + 1)
+            if (true)
             {
-                Vector3 vertex = vertices[index];
-
-                if (saving)
-                    yield return 0;
-                if (vertex.z < 2.0f && poseConfidence > poseConfidenceThreshold)
+                for (int index = startIndexOffset; index < num - endIndexOffset; index = index + 1)
                 {
-                    Color32 color = colors[index];
-                    float hitAngle = 0;
-                    Vector3 hitNormal = Vector3.zero;
+                    //if (num % (2 *kinectWidth) == 0)
+                    //{
+                    //    yield return null;
+                    //}
 
-                    Vector3 uvWorldPosition = Vector3.zero;
-                    if (HitTestUVPosition(ref uvWorldPosition, ref vertex, ref hitAngle, ref hitNormal))
+                    Vector3 vertex = vertices[index];
+
+                    if (saving)
+                        yield return 0;
+                    if (vertex.z < 4.0f && poseConfidence > poseConfidenceThreshold)
                     {
-                        int x_coord = (int)(uvWorldPosition.x * textureWidth);
-                        int y_coord = (int)(uvWorldPosition.y * textureHeight);
+                        Color32 color = colors[index];
+                        float hitAngle = 0;
+                        Vector3 hitNormal = Vector3.zero;
 
-                        if (mask_except.GetPixel(x_coord, y_coord) == Color.white)
+                        Vector3 uvWorldPosition = Vector3.zero;
+                        if (HitTestUVPosition(ref uvWorldPosition, ref vertex, ref hitAngle, ref hitNormal))
                         {
-                            continue;
-                        }
-                        if (useChromaKey && IsChromaKeyPixel(color))
-                        {
-                            continue;
-                        }
+                            int x_coord = (int)(uvWorldPosition.x * textureWidth);
+                            int y_coord = (int)(uvWorldPosition.y * textureHeight);
 
-                        if (true)
-                        {
-                            //SetPixel with Circle + Filter
-                            if (istexturefilled[x_coord, y_coord] == false)
+                            if (mask_except.GetPixel(x_coord, y_coord) == Color.white)
                             {
-                                istexturefilled[x_coord, y_coord] = true;
-                                nowFilled++;
+                                continue;
                             }
-                            for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
+                            if (useChromaKey && IsChromaKeyPixel(color))
                             {
-                                for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
+                                continue;
+                            }
+
+                            angleWeight = Mathf.Sqrt(Mathf.Cos(hitAngle * Mathf.Deg2Rad));
+
+                            if (true)
+                            {
+                                //SetPixel with Circle + Filter
+                                if (istexturefilled[x_coord, y_coord] == false)
                                 {
-                                    Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
-                                    Vector2 pointRelativePosition = new Vector2(i, j);
-                                    float distanceFromCenter = pointRelativePosition.magnitude;
-
-                                    angleWeight = Mathf.Cos(hitAngle * Mathf.Deg2Rad);
-
-                                    if (i == 0 && j == 0)
-                                    {
-                                        Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
-                                        tex.SetPixel(x_coord + i, y_coord + j, color_blend);
-                                    }
-                                    else if (istexturefilled[x_coord + i, y_coord + j] == true)
-                                    {
-                                        Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
-                                        Color32 brushColor = Color32.Lerp(color_origin, color_blend, distanceFromCenter / brushWindowSize);
-                                        tex.SetPixel(x_coord + i, y_coord + j, brushColor);
-                                    }
-                                    else
-                                    {
-                                        tex.SetPixel(x_coord + i, y_coord + j, color);
-                                    }
-
-                                    // NoNormalBlending
-                                    //if (i == 0 && j == 0)
-                                    //{
-                                    //    tex.SetPixel(x_coord + i, y_coord + j, color);
-                                    //}
-                                    //else if (istexturefilled[x_coord + i, y_coord + j] == true)
-                                    //{
-                                    //    Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
-                                    //    tex.SetPixel(x_coord + i, y_coord + j, brushColor);
-                                    //}
-                                    //else
-                                    //{
-                                    //    tex.SetPixel(x_coord + i, y_coord + j, color);
-                                    //}
-
-
-                                    //if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
-                                    //    istexturefilled[x_coord + i, y_coord + j] = true;
-
-                                    if (index % 1000 == 0)
-                                    {
-                                        // Debug.Log($"{brushColor}, {color}, {color_origin}, {distanceFromCenter / brushWindowSize}, {distanceFromCenter}, {i}{j}");
-                                        Debug.Log(hitAngle);
-                                    }
-
+                                    istexturefilled[x_coord, y_coord] = true;
+                                    nowFilled++;
                                 }
+                                for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
+                                {
+                                    for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
+                                    {
+                                        Color32 color_origin = tex.GetPixel(x_coord + i, y_coord + j);
+                                        Vector2 pointRelativePosition = new Vector2(i, j);
+                                        float distanceFromCenter = pointRelativePosition.magnitude;
+
+                                        if (i == 0 && j == 0)
+                                        {
+                                            Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                            tex.SetPixel(x_coord + i, y_coord + j, color_blend);
+                                        }
+                                        else if (istexturefilled[x_coord + i, y_coord + j] == true)
+                                        {
+                                            Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                            Color32 brushColor = Color32.Lerp(color_origin, color_blend, distanceFromCenter / brushWindowSize);
+                                            tex.SetPixel(x_coord + i, y_coord + j, brushColor);
+                                        }
+                                        else
+                                        {
+                                            tex.SetPixel(x_coord + i, y_coord + j, color);
+                                        }
+
+                                        // NoNormalBlending
+                                        //if (i == 0 && j == 0)
+                                        //{
+                                        //    tex.SetPixel(x_coord + i, y_coord + j, color);
+                                        //}
+                                        //else if (istexturefilled[x_coord + i, y_coord + j] == true)
+                                        //{
+                                        //    Color32 brushColor = Color32.Lerp(color, color_origin, distanceFromCenter / brushWindowSize);
+                                        //    tex.SetPixel(x_coord + i, y_coord + j, brushColor);
+                                        //}
+                                        //else
+                                        //{
+                                        //    tex.SetPixel(x_coord + i, y_coord + j, color);
+                                        //}
+
+
+                                        //if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
+                                        //    istexturefilled[x_coord + i, y_coord + j] = true;
+
+                                        //if (index % 1000 == 0)
+                                        //{
+                                        //    // Debug.Log($"{brushColor}, {color}, {color_origin}, {distanceFromCenter / brushWindowSize}, {distanceFromCenter}, {i}{j}");
+                                        //    Debug.Log(hitAngle);
+                                        //}
+
+                                    }
+                                }
+
+                                //SetPixel with cross
+                                //tex.SetPixel(x_coord, y_coord, color);
+                                //tex.SetPixel(x_coord - 1, y_coord, color);
+                                //tex.SetPixel(x_coord + 1, y_coord, color);
+                                //tex.SetPixel(x_coord, y_coord - 1, color);
+                                //tex.SetPixel(x_coord, y_coord + 1, color);
+
+
+                                // SetPixel with square
+                                //Color[] colors = Enumerable.Repeat<Color>(color, brushWindowSize * brushWindowSize).ToArray<Color>();
+                                //tex.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
+
+                                //if (istexturefilled[x_coord, y_coord] == false)
+                                //{
+                                //    istexturefilled[x_coord, y_coord] = true;
+                                //    nowFilled++;
+                                //}
+
+
+
+
+                                brushCounter++;
                             }
 
-                            //SetPixel with cross
-                            //tex.SetPixel(x_coord, y_coord, color);
-                            //tex.SetPixel(x_coord - 1, y_coord, color);
-                            //tex.SetPixel(x_coord + 1, y_coord, color);
-                            //tex.SetPixel(x_coord, y_coord - 1, color);
-                            //tex.SetPixel(x_coord, y_coord + 1, color);
-
-
-                            // SetPixel with square
-                            //Color[] colors = Enumerable.Repeat<Color>(color, brushWindowSize * brushWindowSize).ToArray<Color>();
-                            //tex.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
-
-                            //if (istexturefilled[x_coord, y_coord] == false)
-                            //{
-                            //    istexturefilled[x_coord, y_coord] = true;
-                            //    nowFilled++;
-                            //}
-                           
-
-
-
-                            brushCounter++;
-                        }
-
-                        if (useNormalmap)
-                        {
-                            if (!(index % kinectWidth == 0 || index % kinectWidth == kinectWidth - 1 || index < kinectWidth || index > num - kinectWidth))
+                            if (useNormalmap)
                             {
-                                Vector3 normal = calculateNormal(vertex, vertices[index + 1], vertices[index - kinectWidth], vertices[index - 1], vertices[index + kinectWidth]);
-                                //if (index % 1000 == 0)
-                                //{
-                                //    Debug.Log(normal.normalized.ToString());
-                                //    Debug.Log(hitNormal.magnitude); 
-                                //}
-                                Color normalColor = normalToColor((normal.normalized - hitNormal).normalized);
-                                Color[] colors = Enumerable.Repeat<Color>(normalColor, brushWindowSize * brushWindowSize).ToArray<Color>();
-                                normalMap.SetPixels(x_coord, y_coord, brushWindowSize, brushWindowSize, colors);
+                                if (!(index % kinectWidth == 0 || index % kinectWidth == kinectWidth - 1 || index < kinectWidth || index > num - kinectWidth))
+                                {
+                                    Vector3 normal = calculateNormal(vertex, vertices[index + 1], vertices[index - kinectWidth], vertices[index - 1], vertices[index + kinectWidth]);
+                                    //if (index % 1000 == 0)
+                                    //{
+                                    //    Debug.Log(normal.normalized.ToString());
+                                    //    Debug.Log(hitNormal.magnitude); 
+                                    //}
+                                    Color normalColor = normalToColor((normal.normalized - hitNormal).normalized);
+                                    color = normalColor;
+
+                                    for (int i = -Mathf.RoundToInt(brushWindowSize / 2); i < Mathf.RoundToInt(brushWindowSize / 2); i++)
+                                    {
+                                        for (int j = -Mathf.RoundToInt(brushWindowSize / 2); j < Mathf.RoundToInt(brushWindowSize / 2); j++)
+                                        {
+                                            Color32 color_origin = normalMap.GetPixel(x_coord + i, y_coord + j);
+                                            Vector2 pointRelativePosition = new Vector2(i, j);
+                                            float distanceFromCenter = pointRelativePosition.magnitude;
+
+
+
+                                            if (i == 0 && j == 0)
+                                            {
+                                                Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                                normalMap.SetPixel(x_coord + i, y_coord + j, color_blend);
+                                            }
+                                            else if (istexturefilled[x_coord + i, y_coord + j] == true)
+                                            {
+                                                Color32 color_blend = Color32.Lerp(color_origin, color, angleWeight * defaultBlendRate);
+                                                Color32 brushColor = Color32.Lerp(color_origin, color_blend, distanceFromCenter / brushWindowSize);
+                                                normalMap.SetPixel(x_coord + i, y_coord + j, brushColor);
+                                            }
+                                            else
+                                            {
+                                                normalMap.SetPixel(x_coord + i, y_coord + j, color);
+                                            }
+
+
+                                            //if (x_coord + i >= 0 && y_coord + j >= 0 && x_coord + i <= 1024 || y_coord + j <= 1024)
+                                            //    istexturefilled[x_coord + i, y_coord + j] = true;
+
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
+
             tex.Apply();
             normalMap.Apply();
             // RenderTexture.active = null;
@@ -549,7 +588,7 @@ public class main : MonoBehaviour
             }
 
 
-
+            // yield return null;
             yield return new WaitForSeconds(UpdatePeriod);
         }
         
