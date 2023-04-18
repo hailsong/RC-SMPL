@@ -65,7 +65,9 @@ Temp/
 Assets/Model/
 Assets/Savelog/
 Assets/SaveTextures/
+Assets/SaveStream/
 Assets/SMPLX/
+Assets/Showroom Environment - gallery/
 /Library/
 /Temp/
 /Obj/
@@ -74,5 +76,6 @@ Assets/SMPLX/
 /Logs/
 /MemoryCaptures/
 /Packages/
+/Screenchots/
 
 

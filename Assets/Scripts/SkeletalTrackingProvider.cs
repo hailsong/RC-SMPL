@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.Kinect.BodyTracking;
 using Microsoft.Azure.Kinect.Sensor;
+
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -69,6 +70,15 @@ public class SkeletalTrackingProvider : BackgroundDataProvider
 
                 int width = device.GetCalibration().DepthCameraCalibration.ResolutionWidth;
                 int height = device.GetCalibration().DepthCameraCalibration.ResolutionHeight;
+
+                Debug.Log("Intrinsic Parameters");
+                Debug.Log("--------------------------------------------------");
+                for (int i = 0; i < device.GetCalibration().DepthCameraCalibration.Intrinsics.Parameters.Length; i++)
+                {
+                    Debug.Log(device.GetCalibration().DepthCameraCalibration.Intrinsics.Parameters[i]);
+                }
+                Debug.Log("--------------------------------------------------");
+
                 num = width * height;
                 Debug.Log($"{width}, {height}");
                 Debug.Log("num" + num.ToString());

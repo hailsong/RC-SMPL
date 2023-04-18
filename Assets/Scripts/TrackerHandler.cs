@@ -141,6 +141,13 @@ public class TrackerHandler : MonoBehaviour
         return trackerFrameData.colorImg;
     }
 
+    public Body getBodyData(BackgroundData trackerFrameData)
+    {
+        int closestBody = findClosestTrackedBody(trackerFrameData);
+
+        return trackerFrameData.Bodies[closestBody];
+    }
+
 
     int findIndexFromId(BackgroundData frameData, int id)
     {

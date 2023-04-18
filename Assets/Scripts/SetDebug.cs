@@ -17,4 +17,11 @@ public class SetDebug : MonoBehaviour
         m_Text.text = this.gameObject.name + " " + value.ToString() + "ms";
 
     }
+
+    public void SetDebugConfidence(float value)
+    {
+
+        m_Text.text = this.gameObject.name + " " + value.ToString().Substring(0, 4);
+
+    }
 }
