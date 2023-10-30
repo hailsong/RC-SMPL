@@ -7,6 +7,10 @@
 
 This repository contains the official implementation of the paper "RC-SMPL : Real-time Cumulative SMPL-based Avatar Body Generation (IEEE ISMAR 2023)". For more implementation detail, please refer our paper.
 
+![alt text](./Images/teaser_6.png)
+![alt text](./Images/figure2_4.png)
+
+
 Abstract : *We present a novel method for avatar body generation that cumulatively updates the texture and normal map in real-time. Multiple images or videos have been broadly adopted to create detailed 3D human models that capture more realistic user identities in both Augmented Reality (AR) and Virtual Reality (VR) environments.
 However, this approach has a higher spatiotemporal cost because it requires a complex camera setup and extensive computational resources. For lightweight reconstruction of personalized avatar bodies, we design a system that progressively captures the texture and normal values using a single RGBD camera to generate the widelyaccepted 3D parametric body model, SMPL-X. Quantitatively, our system maintains real-time performance while delivering reconstruction quality comparable to the state-of-the-art method. Moreover, user studies reveal the benefits of real-time avatar creation and its applicability in various collaborative scenarios. By enabling the production of high-fidelity avatars at a lower cost, our method provides more general way to create personalized avatar in AR/VR applications, thereby fostering more expressive self-representation in the metaverse.*
 
