@@ -17,9 +17,9 @@ However, this approach has a higher spatiotemporal cost because it requires a co
 -----
 
 ## BibTex
-'''
+```
 Will be updated after publishing on IEEE Digital Library.
-'''
+```
 
 -----
 
@@ -45,24 +45,26 @@ During installation, you might install these dependencies.
 - (Optional) Azure kinect viewer for check hardware condition
 
 ### 1. clone the repository
-'''
+```
 git clone https://github.com/hailsong/RC-SMPL.git
-'''
+```
 
 ### 2. Open project with unity hub (>=2019.3)
 If you face some version conflict, just click the button "Continue" and "Ignore".
 
 ### 3. fetch dependency (Nuget Package Manager console)
 Once you open the project using Unity, fetching dependencies is needed. This command will update the dependencies by refering RC-SMPL/packages.config.
-'''
+```
 Update-Package -reinstall
-'''
+```
 You can refer this link to check details. They explain quite well about installization of Kinect DK body tracking implementation on Unity. : [Set Up Azure Kinect for Body Tracking in Unity - w/K4A Error Fix](https://www.youtube.com/watch?v=PGsxP6Yoq9I)
 
 The official documentation is at here : [Sample Unity Body Tracking Application](https://github.com/microsoft/Azure-Kinect-Samples/blob/master/body-tracking-samples/sample_unity_bodytracking/README.md)
 
 ### 4. Run MoveLibraryFiles.bat
+```
 RC-SMPL/MoveLibraryFiles.bat
+```
 
 ### 5. Install SMPL-X Unity Assets
 [SMPL-X Project Page](https://smpl-x.is.tue.mpg.de/)
