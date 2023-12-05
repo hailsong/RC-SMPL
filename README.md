@@ -3,6 +3,10 @@
 # RC-SMPL : Real-time Cumulative SMPL-based Avatar Body Generation (IEEE ISMAR 2023)
 [Hail Song](https://www.linkedin.com/in/hailsong/), Boram Yoon, Woojin Cho, Woontack Woo
 
+
+[Code](https://github.com/hailsong/RC-SMPL) / [Youtube](https://youtu.be/OHjhBW775XE?feature=shared) / [Paper](https://hailsong.github.io/assets/pdf/RC_SMPL_paper.pdf) / [Appendix](https://hailsong.github.io/assets/pdf/RC_SMPL_appendix.pdf)
+
+
 -----
 
 This repository contains the official implementation of the paper "RC-SMPL : Real-time Cumulative SMPL-based Avatar Body Generation (IEEE ISMAR 2023)". For more implementation detail, please refer our paper.
