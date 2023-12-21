@@ -22,7 +22,14 @@ However, this approach has a higher spatiotemporal cost because it requires a co
 
 ## BibTex
 ```
-Will be updated after publishing on IEEE Digital Library.
+@inproceedings{song2023rc,
+  title={RC-SMPL: Real-time Cumulative SMPL-based Avatar Body Generation},
+  author={Song, Hail and Yoon, Boram and Cho, Woojin and Woo, Woontack},
+  booktitle={2023 IEEE International Symposium on Mixed and Augmented Reality (ISMAR)},
+  pages={89--98},
+  year={2023},
+  organization={IEEE}
+}
 ```
 
 -----
